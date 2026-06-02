@@ -77,15 +77,12 @@ export class AuthController {
 
   async searchUsers(req, res) {
     try {
-      const { q } = req.query;
-      if (!q || q.trim().length < 2) {
-        return res.status(400).json({ success: false, message: 'Query must be at least 2 characters' });
-      }
+      const q = req.query.q || '';
       const users = await searchUsersUseCase.execute(q.trim());
       const { statusCode, body } = ApiResponse.success(users);
       res.status(statusCode).json(body);
     } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message, 500);
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
       res.status(statusCode).json(body);
     }
   }

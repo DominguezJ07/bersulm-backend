@@ -124,7 +124,4 @@ export const validateRevealCard = [
   handleValidationErrors
 ];
 
-export const validateSearchUsers = [
-  query('q').trim().isLength({ min: 2 }).withMessage('Query must be at least 2 characters'),
-  handleValidationErrors
-];
+export const validateSearchUsers = [query('q').optional().trim(), handleValidationErrors];

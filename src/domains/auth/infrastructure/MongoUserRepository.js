@@ -58,13 +58,13 @@ export class MongoUserRepository extends IUserRepository {
     return this._mapToEntity(updatedDoc);
   }
 
-  async search(query, limit = 20) {
-    const regex = new RegExp(query, 'i');
-    const docs = await UserModel.find({
-      $or: [{ name: regex }, { email: regex }, { phone: regex }]
-    })
-      .limit(limit)
-      .lean();
+  async search(query, limit = 50) {
+    const filter = { role: 'client' };
+    if (query) {
+      const regex = new RegExp(query, 'i');
+      filter.$or = [{ name: regex }, { email: regex }, { phone: regex }];
+    }
+    const docs = await UserModel.find(filter).limit(limit).lean();
     return docs.map((doc) => this._mapToEntity(doc));
   }
 
