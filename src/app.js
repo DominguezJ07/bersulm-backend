@@ -31,7 +31,12 @@ app.use(compression());
 
 const allowedOrigins = env.ALLOWED_ORIGINS
   ? env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:3000'];
+  : [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://bersulm-frontend.vercel.app',
+      'https://bersulm-frontend-3ktfq2a30-dominguezj07s-projects.vercel.app'
+    ];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 app.use(
