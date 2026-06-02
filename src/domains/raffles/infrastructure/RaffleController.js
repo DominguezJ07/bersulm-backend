@@ -3,6 +3,8 @@ import { VoteForRewardUseCase } from '../application/VoteForRewardUseCase.js';
 import { SpinRaffleUseCase } from '../application/SpinRaffleUseCase.js';
 import { GetVotesUseCase } from '../application/GetVotesUseCase.js';
 import { MongoRaffleRepository } from './MongoRaffleRepository.js';
+import { RaffleModel } from './RaffleModel.js';
+import { RewardVoteModel } from './RewardVoteModel.js';
 
 const raffleRepository = new MongoRaffleRepository();
 const getCurrentRaffleUseCase = new GetCurrentRaffleUseCase(raffleRepository);
@@ -13,26 +15,69 @@ const getVotesUseCase = new GetVotesUseCase(raffleRepository);
 export class RaffleController {
   async getCurrent(req, res) {
     try {
-      const result = await getCurrentRaffleUseCase.execute();
-      res.json({ success: true, data: result });
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      console.log('=== BUSCANDO SORTEO ===');
+      console.log('Fecha actual:', now);
+      console.log('Mes calculado:', month);
+      console.log('Año:', now.getFullYear());
+      console.log('Mes número:', now.getMonth() + 1);
+
+      // Buscar el sorteo del mes actual sin importar su status (voting, active, completed)
+      const raffle = await RaffleModel.findOne({ month });
+
+      console.log('Sorteo encontrado:', raffle ? 'SÍ' : 'NO');
+
+      if (!raffle) {
+        const allRaffles = await RaffleModel.find({});
+        console.log('Sorteos en la BD:', allRaffles.map(r => ({ _id: r._id, month: r.month })));
+
+        return res.status(404).json({
+          success: false,
+          message: 'No hay sorteo este mes',
+          buscando: month
+        });
+      }
+
+      res.json({ success: true, data: raffle });
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 
   async vote(req, res) {
     try {
-      const user = req.user;
-      const { raffleId, rewardId } = req.body;
+      const { rewardId, raffleId } = req.body;
+      const userId = req.user.id;
 
-      if (!raffleId || !rewardId) {
-        return res.status(400).json({ success: false, message: 'raffleId and rewardId are required' });
+      console.log('Votando - userId:', userId);
+      console.log('Votando - raffleId:', raffleId);
+      console.log('Votando - rewardId:', rewardId);
+
+      const existingVote = await RewardVoteModel.findOne({
+        userId,
+        raffleId
+      });
+
+      console.log('Voto existente encontrado:', existingVote);
+
+      if (existingVote) {
+        return res.status(400).json({
+          success: false,
+          message: 'Ya votaste este mes'
+        });
       }
 
-      const vote = await voteForRewardUseCase.execute(user, raffleId, rewardId);
+      const vote = await RewardVoteModel.create({
+        userId,
+        rewardId,
+        raffleId
+      });
+
       res.status(201).json({ success: true, data: vote });
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -54,15 +99,44 @@ export class RaffleController {
 
   async getVotes(req, res) {
     try {
-      const { raffleId } = req.query;
-      if (!raffleId) {
-        return res.status(400).json({ success: false, message: 'raffleId is required' });
+      const now = new Date()
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+      const raffle = await RaffleModel.findOne({ month })
+
+      if (!raffle) {
+        return res.json({ success: true, data: [] })
       }
 
-      const votes = await getVotesUseCase.execute(raffleId);
-      res.json({ success: true, data: votes });
+      // Retornar TODOS los votos del sorteo, no filtrar por usuario
+      const votes = await RewardVoteModel.find({ raffleId: raffle._id })
+
+      console.log('Total votos encontrados:', votes.length)
+
+      res.json({ success: true, data: votes })
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      res.status(500).json({ success: false, message: error.message })
+    }
+  }
+
+  async createMonthly(req, res) {
+    try {
+      const { month, status, raffleDate } = req.body;
+      if (!month || !raffleDate) {
+        return res.status(400).json({ success: false, message: 'month and raffleDate are required' });
+      }
+
+      const raffle = await RaffleModel.create({
+        month,
+        status: status || 'voting',
+        raffleDate: new Date(raffleDate),
+        participants: [],
+        createdAt: new Date()
+      });
+
+      res.status(201).json({ success: true, data: raffle });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 }

@@ -1,12 +1,14 @@
 import app from './app.js';
 import mongodb from './shared/infrastructure/database/mongodb.js';
 import env from './config/env.js';
+import { initRaffleCrons } from './shared/infrastructure/cron/RaffleCron.js';
 
 let server;
 
 const start = async () => {
   try {
     await mongodb.connect();
+    initRaffleCrons();
 
     server = app.listen(env.PORT, () => {
       console.log(`Server listening on port ${env.PORT}`);

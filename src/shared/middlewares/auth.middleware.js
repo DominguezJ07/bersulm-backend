@@ -6,8 +6,18 @@ export const authMiddleware = (req, res, next) => {
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
     if (!token) return res.status(401).json({ success: false, message: 'Authorization token required' });
 
-    const payload = JwtService.verifyAccessToken(token);
-    req.user = payload;
+    const decoded = JwtService.verifyAccessToken(token);
+    console.log('Token decodificado:', decoded);
+    if (!decoded || !decoded.role) {
+      return res.status(401).json({ success: false, message: 'Invalid token payload' });
+    }
+    req.user = {
+      id: decoded.id || decoded._id || decoded.sub,
+      email: decoded.email,
+      role: decoded.role,
+    };
+    console.log('req.user asignado:', req.user);
+    console.log('req.user final:', req.user);
     next();
   } catch (err) {
     return res.status(401).json({ success: false, message: 'Invalid or expired token' });

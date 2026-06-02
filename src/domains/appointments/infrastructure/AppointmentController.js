@@ -3,9 +3,11 @@ import { GetAvailableSlotsUseCase } from '../application/GetAvailableSlotsUseCas
 import { CancelAppointmentUseCase } from '../application/CancelAppointmentUseCase.js';
 import { GetUserAppointmentsUseCase } from '../application/GetUserAppointmentsUseCase.js';
 import { MongoAppointmentRepository } from './MongoAppointmentRepository.js';
+import { MongoServiceRepository } from '../../services/infrastructure/MongoServiceRepository.js';
 
 const appointmentRepository = new MongoAppointmentRepository();
-const createAppointmentUseCase = new CreateAppointmentUseCase(appointmentRepository, null);
+const serviceRepository = new MongoServiceRepository();
+const createAppointmentUseCase = new CreateAppointmentUseCase(appointmentRepository, null, serviceRepository);
 const getAvailableSlotsUseCase = new GetAvailableSlotsUseCase(appointmentRepository);
 const cancelAppointmentUseCase = new CancelAppointmentUseCase(appointmentRepository, null);
 const getUserAppointmentsUseCase = new GetUserAppointmentsUseCase(appointmentRepository);

@@ -11,7 +11,7 @@ const appointmentSchema = new mongoose.Schema({
     default: 'pending' 
   },
   notes: { type: String, default: '' },
-  totalPrice: { type: Number, required: true },
+  totalPrice: { type: Number, required: false, default: 0 },
   cancelledAt: { type: Date },
   cancelReason: { type: String }
 }, {

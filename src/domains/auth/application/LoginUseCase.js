@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import JwtService from '../../../shared/infrastructure/jwt/JwtService.js';
 import { InvalidCredentials } from '../domain/AuthErrors.js';
 
 export class LoginUseCase {
@@ -27,11 +27,11 @@ export class LoginUseCase {
       throw new InvalidCredentials();
     }
 
-    const token = jwt.sign(
-      { sub: user._id, role: user.role },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '24h' }
-    );
+    const token = JwtService.generateAccessToken({
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+    });
 
     return { user, token };
   }
