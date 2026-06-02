@@ -3,6 +3,7 @@ import { AddVisitUseCase } from '../application/AddVisitUseCase.js';
 import { SpinCardUseCase } from '../application/SpinCardUseCase.js';
 import { InitMinigameUseCase } from '../application/InitMinigameUseCase.js';
 import { RevealCardUseCase } from '../application/RevealCardUseCase.js';
+import { LoyaltyCard } from '../domain/LoyaltyCard.entity.js';
 import { MongoLoyaltyRepository } from './MongoLoyaltyRepository.js';
 import { MongoRewardRepository } from '../../rewards/infrastructure/MongoRewardRepository.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
@@ -96,9 +97,10 @@ export class LoyaltyController {
         return res.status(400).json({ success: false, message: 'userId param is required' });
       }
 
-      const card = await loyaltyRepository.findByUserId(userId);
+      let card = await loyaltyRepository.findByUserId(userId);
       if (!card) {
-        return res.status(404).json({ success: false, message: 'User has no loyalty card' });
+        card = LoyaltyCard.create({ userId, visits: 0, totalVisits: 0, status: 'active', currentCycle: 1 });
+        card = await loyaltyRepository.save(card);
       }
 
       const { statusCode, body } = ApiResponse.success(card);
