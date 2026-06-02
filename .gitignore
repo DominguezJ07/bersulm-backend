@@ -1,2 +1,16 @@
 ﻿node_modules/
-.envdist/*.log
+.env
+.env.local
+.env.production
+dist
+*.log
+logs/
+coverage/
+uploads/
+tmp/
+*.pid
+*.seed
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

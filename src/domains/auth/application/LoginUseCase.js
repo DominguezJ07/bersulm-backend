@@ -1,13 +1,15 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { InvalidCredentials } from '../domain/AuthErrors.js';
 
 export class LoginUseCase {
   /**
    * @param {import('../domain/IUserRepository').IUserRepository} userRepository
+   * @param {import('../domain/ITokenService').ITokenService} tokenService
+   * @param {import('../../../shared/infrastructure/bcrypt/BcryptService.js').BcryptService} bcryptService
    */
-  constructor(userRepository) {
+  constructor(userRepository, tokenService, bcryptService) {
     this.userRepository = userRepository;
+    this.tokenService = tokenService;
+    this.bcryptService = bcryptService;
   }
 
   /**
@@ -22,17 +24,23 @@ export class LoginUseCase {
       throw new InvalidCredentials();
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordValid = await this.bcryptService.compare(password, user.passwordHash);
     if (!isPasswordValid) {
       throw new InvalidCredentials();
     }
 
-    const token = jwt.sign(
-      { sub: user._id, role: user.role },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '24h' }
-    );
+    const token = this.tokenService.generateAccessToken({
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role
+    });
 
-    return { user, token };
+    const refreshToken = this.tokenService.generateRefreshToken({
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role
+    });
+
+    return { user, token, refreshToken };
   }
 }

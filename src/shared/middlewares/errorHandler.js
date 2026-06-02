@@ -1,28 +1,31 @@
 import mongoose from 'mongoose';
 
 export const errorHandler = (err, req, res, next) => {
-  console.error(err);
+  const logger = req.log || console;
 
-  // Domain errors with statusCode
   if (err.statusCode) {
     return res.status(err.statusCode).json({ success: false, message: err.message, code: err.name });
   }
 
-  // Mongoose validation error
   if (err instanceof mongoose.Error.ValidationError) {
+    logger.warn({ err }, 'Mongoose validation error');
     return res.status(400).json({ success: false, message: err.message, code: 'ValidationError' });
   }
 
-  // Duplicate key
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    logger.warn({ err }, 'Malformed JSON');
+    return res.status(400).json({ success: false, message: 'Malformed JSON', code: 'SyntaxError' });
+  }
+
   if (err.code && err.code === 11000) {
+    logger.warn({ err }, 'Duplicate key error');
     return res.status(409).json({ success: false, message: 'Duplicate key error', code: 'DuplicateKey' });
   }
 
-  // JWT errors
   if (err.name && (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError')) {
     return res.status(401).json({ success: false, message: err.message, code: err.name });
   }
 
-  // Fallback
+  logger.error({ err }, 'Unhandled error');
   res.status(500).json({ success: false, message: 'Internal Server Error', code: 'InternalError' });
 };

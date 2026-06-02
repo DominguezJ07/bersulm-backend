@@ -1,52 +1,75 @@
 import { RegisterUseCase } from '../application/RegisterUseCase.js';
 import { LoginUseCase } from '../application/LoginUseCase.js';
 import { MongoUserRepository } from './MongoUserRepository.js';
+import BcryptService from '../../../shared/infrastructure/bcrypt/BcryptService.js';
+import JwtService from '../../../shared/infrastructure/jwt/JwtService.js';
+import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
 const userRepository = new MongoUserRepository();
-const registerUseCase = new RegisterUseCase(userRepository);
-const loginUseCase = new LoginUseCase(userRepository);
+const registerUseCase = new RegisterUseCase(userRepository, BcryptService);
+const loginUseCase = new LoginUseCase(userRepository, JwtService, BcryptService);
 
 export class AuthController {
   async register(req, res) {
     try {
       const { name, email, phone, password } = req.body;
       const user = await registerUseCase.execute({ name, email, phone, password });
-      
-      // Don't return passwordHash
+
       const { passwordHash, ...userResponse } = user;
-      
-      res.status(201).json({
-        status: 'success',
-        data: userResponse
-      });
+
+      const { statusCode, body } = ApiResponse.created(userResponse);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({
-        status: 'error',
-        message: error.message
-      });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
   async login(req, res) {
     try {
       const { email, password } = req.body;
-      const { user, token } = await loginUseCase.execute({ email, password });
-      
-      // Don't return passwordHash
+      const { user, token, refreshToken } = await loginUseCase.execute({ email, password });
+
       const { passwordHash, ...userResponse } = user;
 
-      res.status(200).json({
-        status: 'success',
-        data: {
-          user: userResponse,
-          token
-        }
-      });
+      const { statusCode, body } = ApiResponse.success({ user: userResponse, token, refreshToken });
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({
-        status: 'error',
-        message: error.message
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async refreshToken(req, res) {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return res.status(400).json({ success: false, message: 'Refresh token is required' });
+      }
+
+      const decoded = JwtService.verifyRefreshToken(refreshToken);
+
+      const user = await userRepository.findByEmail(decoded.email);
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'User not found' });
+      }
+
+      const newAccessToken = JwtService.generateAccessToken({
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role
       });
+
+      const newRefreshToken = JwtService.generateRefreshToken({
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role
+      });
+
+      const { statusCode, body } = ApiResponse.success({ token: newAccessToken, refreshToken: newRefreshToken });
+      res.status(statusCode).json(body);
+    } catch (error) {
+      res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
     }
   }
 }

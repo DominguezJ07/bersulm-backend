@@ -1,13 +1,14 @@
-import bcrypt from 'bcryptjs';
 import { User } from '../domain/User.entity.js';
 import { UserAlreadyExists } from '../domain/AuthErrors.js';
 
 export class RegisterUseCase {
   /**
    * @param {import('../domain/IUserRepository').IUserRepository} userRepository
+   * @param {import('../../../shared/infrastructure/bcrypt/BcryptService.js').BcryptService} bcryptService
    */
-  constructor(userRepository) {
+  constructor(userRepository, bcryptService) {
     this.userRepository = userRepository;
+    this.bcryptService = bcryptService;
   }
 
   /**
@@ -24,8 +25,8 @@ export class RegisterUseCase {
       throw new UserAlreadyExists();
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    
+    const passwordHash = await this.bcryptService.hash(password);
+
     const user = User.create({
       name,
       email,

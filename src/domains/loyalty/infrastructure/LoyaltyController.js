@@ -4,6 +4,7 @@ import { ClaimRewardUseCase } from '../application/ClaimRewardUseCase.js';
 import { SpinCardUseCase } from '../application/SpinCardUseCase.js';
 import { MongoLoyaltyRepository } from './MongoLoyaltyRepository.js';
 import { MongoRewardRepository } from '../../rewards/infrastructure/MongoRewardRepository.js';
+import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
 const loyaltyRepository = new MongoLoyaltyRepository();
 const rewardRepository = new MongoRewardRepository();
@@ -21,28 +22,27 @@ export class LoyaltyController {
       }
 
       const card = await getLoyaltyCardUseCase.execute(userId);
-      res.json({ success: true, data: card });
+      const { statusCode, body } = ApiResponse.success(card);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
   async addVisit(req, res) {
     try {
-      const user = req.user;
-      if (!user || user.role !== 'admin') {
-        return res.status(403).json({ success: false, message: 'Admin privileges required' });
-      }
-
       const { userId } = req.body;
       if (!userId) {
         return res.status(400).json({ success: false, message: 'userId is required' });
       }
 
       const card = await addVisitUseCase.execute(userId);
-      res.json({ success: true, data: card });
+      const { statusCode, body } = ApiResponse.success(card);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -54,18 +54,22 @@ export class LoyaltyController {
       }
 
       const card = await claimRewardUseCase.execute(userId);
-      res.json({ success: true, data: card });
+      const { statusCode, body } = ApiResponse.success(card);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
   async spinCard(req, res) {
     try {
       const reward = await spinCardUseCase.execute();
-      res.json({ success: true, data: reward });
+      const { statusCode, body } = ApiResponse.success(reward);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 }

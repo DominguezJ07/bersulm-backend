@@ -1,5 +1,5 @@
 import { Reward } from '../domain/Reward.entity.js';
-import { DomainError } from '../domain/RewardErrors.js';
+import { ForbiddenError } from '../../../shared/domain/DomainError.js';
 
 export class CreateRewardUseCase {
   /**
@@ -22,7 +22,7 @@ export class CreateRewardUseCase {
    */
   async execute(user, rewardData) {
     if (!user || user.role !== 'admin') {
-      throw new DomainError('Admin privileges required', 403);
+      throw new ForbiddenError('Admin privileges required');
     }
 
     const reward = Reward.create({

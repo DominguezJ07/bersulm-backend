@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+if [ -z "$2" ]; then
+  node scripts/generate-commit-msg.js "$1"
+fi

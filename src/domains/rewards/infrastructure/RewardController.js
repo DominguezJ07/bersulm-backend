@@ -2,6 +2,7 @@ import { GetRewardsUseCase } from '../application/GetRewardsUseCase.js';
 import { CreateRewardUseCase } from '../application/CreateRewardUseCase.js';
 import { RewardNotFound } from '../domain/RewardErrors.js';
 import { MongoRewardRepository } from './MongoRewardRepository.js';
+import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
 const rewardRepository = new MongoRewardRepository();
 const getRewardsUseCase = new GetRewardsUseCase(rewardRepository);
@@ -11,9 +12,11 @@ export class RewardController {
   async getAll(req, res) {
     try {
       const rewards = await getRewardsUseCase.execute();
-      res.json({ success: true, data: rewards });
+      const { statusCode, body } = ApiResponse.success(rewards);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -23,23 +26,16 @@ export class RewardController {
       const { name, description, icon, type, isActive } = req.body;
 
       if (!name || !description || !icon || !type) {
-        return res.status(400).json({
-          success: false,
-          message: 'name, description, icon and type are required'
-        });
+        return res.status(400).json({ success: false, message: 'name, description, icon and type are required' });
       }
 
-      const reward = await createRewardUseCase.execute(user, {
-        name,
-        description,
-        icon,
-        type,
-        isActive
-      });
+      const reward = await createRewardUseCase.execute(user, { name, description, icon, type, isActive });
 
-      res.status(201).json({ success: true, data: reward });
+      const { statusCode, body } = ApiResponse.created(reward);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -65,9 +61,11 @@ export class RewardController {
       existingReward.isActive = isActive ?? existingReward.isActive;
 
       const updated = await rewardRepository.update(existingReward);
-      res.json({ success: true, data: updated });
+      const { statusCode, body } = ApiResponse.success(updated);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -86,9 +84,10 @@ export class RewardController {
       }
 
       await rewardRepository.delete(id);
-      res.json({ success: true, data: reward });
+      res.status(204).send();
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 }

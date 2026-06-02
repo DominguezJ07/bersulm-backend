@@ -1,4 +1,4 @@
-import { DomainError } from '../../auth/domain/AuthErrors.js';
+import { DomainError } from '../../../shared/domain/DomainError.js';
 
 export class ServiceNotFound extends DomainError {
   constructor() {

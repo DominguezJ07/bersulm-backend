@@ -2,6 +2,7 @@ import { GetGalleryUseCase } from '../application/GetGalleryUseCase.js';
 import { CreateGalleryItemUseCase } from '../application/CreateGalleryItemUseCase.js';
 import { DeleteGalleryItemUseCase } from '../application/DeleteGalleryItemUseCase.js';
 import { MongoGalleryRepository } from './MongoGalleryRepository.js';
+import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
 const galleryRepository = new MongoGalleryRepository();
 const getGalleryUseCase = new GetGalleryUseCase(galleryRepository);
@@ -13,9 +14,11 @@ export class GalleryController {
     try {
       const { category } = req.query;
       const items = await getGalleryUseCase.execute(category);
-      res.json({ success: true, data: items });
+      const { statusCode, body } = ApiResponse.success(items);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -25,10 +28,7 @@ export class GalleryController {
       const { imageUrl, title, category, isActive, order } = req.body;
 
       if (!imageUrl || !title || !category) {
-        return res.status(400).json({
-          success: false,
-          message: 'imageUrl, title and category are required'
-        });
+        return res.status(400).json({ success: false, message: 'imageUrl, title and category are required' });
       }
 
       const item = await createGalleryItemUseCase.execute(user, {
@@ -39,9 +39,11 @@ export class GalleryController {
         order
       });
 
-      res.status(201).json({ success: true, data: item });
+      const { statusCode, body } = ApiResponse.created(item);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -54,10 +56,11 @@ export class GalleryController {
         return res.status(400).json({ success: false, message: 'Gallery item id is required' });
       }
 
-      const deletedItem = await deleteGalleryItemUseCase.execute(user, id);
-      res.json({ success: true, data: deletedItem });
+      await deleteGalleryItemUseCase.execute(user, id);
+      res.status(204).send();
     } catch (error) {
-      res.status(error.statusCode || 500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 }

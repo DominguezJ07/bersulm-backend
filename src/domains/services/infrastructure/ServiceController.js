@@ -2,6 +2,7 @@ import { GetServicesUseCase } from '../application/GetServicesUseCase.js';
 import { CreateServiceUseCase } from '../application/CreateServiceUseCase.js';
 import { UpdateServiceUseCase } from '../application/UpdateServiceUseCase.js';
 import { MongoServiceRepository } from './MongoServiceRepository.js';
+import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
 const serviceRepository = new MongoServiceRepository();
 const getServicesUseCase = new GetServicesUseCase(serviceRepository);
@@ -12,15 +13,11 @@ export class ServiceController {
   async getAll(req, res) {
     try {
       const services = await getServicesUseCase.execute();
-      res.status(200).json({
-        status: 'success',
-        data: services
-      });
+      const { statusCode, body } = ApiResponse.success(services);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(500).json({
-        status: 'error',
-        message: error.message
-      });
+      const { statusCode, body } = ApiResponse.error(error.message);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -29,35 +26,24 @@ export class ServiceController {
       const { id } = req.params;
       const service = await serviceRepository.findById(id);
       if (!service) {
-        return res.status(404).json({
-          status: 'error',
-          message: 'Service not found'
-        });
+        return res.status(404).json({ success: false, message: 'Service not found' });
       }
-      res.status(200).json({
-        status: 'success',
-        data: service
-      });
+      const { statusCode, body } = ApiResponse.success(service);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(500).json({
-        status: 'error',
-        message: error.message
-      });
+      const { statusCode, body } = ApiResponse.error(error.message);
+      res.status(statusCode).json(body);
     }
   }
 
   async create(req, res) {
     try {
       const service = await createServiceUseCase.execute(req.body);
-      res.status(201).json({
-        status: 'success',
-        data: service
-      });
+      const { statusCode, body } = ApiResponse.created(service);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({
-        status: 'error',
-        message: error.message
-      });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -65,15 +51,11 @@ export class ServiceController {
     try {
       const { id } = req.params;
       const service = await updateServiceUseCase.execute(id, req.body);
-      res.status(200).json({
-        status: 'success',
-        data: service
-      });
+      const { statusCode, body } = ApiResponse.success(service);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(error.statusCode || 500).json({
-        status: 'error',
-        message: error.message
-      });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -83,10 +65,8 @@ export class ServiceController {
       await serviceRepository.delete(id);
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({
-        status: 'error',
-        message: error.message
-      });
+      const { statusCode, body } = ApiResponse.error(error.message);
+      res.status(statusCode).json(body);
     }
   }
 }

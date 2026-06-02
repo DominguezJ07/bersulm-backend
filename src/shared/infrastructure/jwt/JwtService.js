@@ -1,8 +1,10 @@
 import jwt from 'jsonwebtoken';
 import env from '../../../config/env.js';
+import { ITokenService } from '../../../domains/auth/domain/ITokenService.js';
 
-export class JwtService {
+export class JwtService extends ITokenService {
   constructor() {
+    super();
     this.accessSecret = env.JWT_SECRET;
     this.refreshSecret = env.JWT_REFRESH_SECRET;
   }

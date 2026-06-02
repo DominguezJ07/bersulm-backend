@@ -2,7 +2,6 @@ import { AppointmentModel } from './AppointmentModel.js';
 import { BlockedSlotModel } from './BlockedSlotModel.js';
 import { Appointment } from '../domain/Appointment.entity.js';
 import { IAppointmentRepository } from '../domain/IAppointmentRepository.js';
-
 export class MongoAppointmentRepository extends IAppointmentRepository {
   async findById(id) {
     const doc = await AppointmentModel.findById(id).lean();
@@ -11,28 +10,17 @@ export class MongoAppointmentRepository extends IAppointmentRepository {
 
   async findByUserId(userId) {
     const docs = await AppointmentModel.find({ userId }).sort({ date: -1, time: -1 }).lean();
-    return docs.map(doc => this._mapToEntity(doc));
+    return docs.map((doc) => this._mapToEntity(doc));
   }
 
   async findByDate(date) {
     const docs = await AppointmentModel.find({ date }).lean();
-    return docs.map(doc => this._mapToEntity(doc));
+    return docs.map((doc) => this._mapToEntity(doc));
   }
 
   async findBlockedSlots(date) {
     const docs = await BlockedSlotModel.find({ date }).lean();
-    return docs.map(doc => doc.time);
-  }
-
-  async findAvailableSlots(date) {
-    const allSlots = this._generateSlots();
-    const appointments = await this.findByDate(date);
-    const bookedSlots = appointments
-      .filter(appointment => appointment.status !== 'cancelled')
-      .map(appointment => appointment.time);
-    const blockedSlots = await this.findBlockedSlots(date);
-
-    return allSlots.filter(slot => !bookedSlots.includes(slot) && !blockedSlots.includes(slot));
+    return docs.map((doc) => doc.time);
   }
 
   async save(appointment) {
@@ -76,26 +64,6 @@ export class MongoAppointmentRepository extends IAppointmentRepository {
     ).lean();
 
     return cancelled ? this._mapToEntity(cancelled) : null;
-  }
-
-  _generateSlots() {
-    const slots = [];
-    let hour = 9;
-    let min = 0;
-
-    while (hour < 18 || (hour === 18 && min <= 30)) {
-      const hStr = hour.toString().padStart(2, '0');
-      const mStr = min.toString().padStart(2, '0');
-      slots.push(`${hStr}:${mStr}`);
-
-      min += 30;
-      if (min === 60) {
-        hour += 1;
-        min = 0;
-      }
-    }
-
-    return slots;
   }
 
   _mapToEntity(doc) {
