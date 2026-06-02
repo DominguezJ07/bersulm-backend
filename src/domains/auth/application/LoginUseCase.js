@@ -16,10 +16,12 @@ export class LoginUseCase {
    * @param {Object} credentials
    * @param {string} credentials.email
    * @param {string} credentials.password
-   * @returns {Promise<{ user: import('../domain/User.entity').User, token: string }>}
+   * @returns {Promise<{ user: import('../domain/User.entity').User, token: string, refreshToken: string }>}
    */
   async execute({ email, password }) {
-    const user = await this.userRepository.findByEmail(email);
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const user = await this.userRepository.findByEmail(normalizedEmail);
     if (!user) {
       throw new InvalidCredentials();
     }

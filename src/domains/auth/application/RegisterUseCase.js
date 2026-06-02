@@ -20,7 +20,9 @@ export class RegisterUseCase {
    * @returns {Promise<User>}
    */
   async execute({ name, email, phone, password }) {
-    const existingUser = await this.userRepository.findByEmail(email);
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existingUser = await this.userRepository.findByEmail(normalizedEmail);
     if (existingUser) {
       throw new UserAlreadyExists();
     }
@@ -29,7 +31,7 @@ export class RegisterUseCase {
 
     const user = User.create({
       name,
-      email,
+      email: normalizedEmail,
       phone,
       passwordHash
     });

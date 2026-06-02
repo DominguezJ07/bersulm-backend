@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { UserModel } from './UserModel.js';
 import { User } from '../domain/User.entity.js';
 import { IUserRepository } from '../domain/IUserRepository.js';
@@ -8,7 +9,8 @@ export class MongoUserRepository extends IUserRepository {
    * @returns {Promise<User | null>}
    */
   async findByEmail(email) {
-    const userDoc = await UserModel.findOne({ email }).lean();
+    if (mongoose.connection.readyState !== 1) return null;
+    const userDoc = await UserModel.findOne({ email: email.toLowerCase().trim() }).maxTimeMS(5000).lean();
     if (!userDoc) return null;
     return this._mapToEntity(userDoc);
   }

@@ -57,6 +57,16 @@ app.use(
   })
 );
 
+app.use('/api/v1', (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Service temporarily unavailable. Database not connected.'
+    });
+  }
+  next();
+});
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
