@@ -4,11 +4,7 @@ import { RaffleModel } from '../../../domains/raffles/infrastructure/RaffleModel
 import { RewardVoteModel } from '../../../domains/raffles/infrastructure/RewardVoteModel.js';
 import { AppointmentModel } from '../../../domains/appointments/infrastructure/AppointmentModel.js';
 
-const logger = pino({
-  name: 'raffle-cron',
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  transport: process.env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined
-});
+const logger = pino({ name: 'raffle-cron' });
 
 const isLastDayOfMonth = (date) => {
   const tomorrow = new Date(date);

@@ -5,10 +5,7 @@ import env from './config/env.js';
 import { initRaffleCrons } from './shared/infrastructure/cron/RaffleCron.js';
 import { initSocketServer } from './shared/infrastructure/socket/SocketManager.js';
 
-const logger = pino({
-  level: env.NODE_ENV === 'production' ? 'info' : 'debug',
-  transport: env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined
-});
+const logger = pino({ level: env.NODE_ENV === 'production' ? 'info' : 'debug' });
 
 let server;
 
