@@ -1,4 +1,4 @@
-import { body, param, validationResult } from 'express-validator';
+import { body, param, query, validationResult } from 'express-validator';
 
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
@@ -83,6 +83,7 @@ export const validateCreateReward = [
   body('description').trim().notEmpty().withMessage('Description is required'),
   body('icon').trim().notEmpty().withMessage('Icon is required'),
   body('type').trim().notEmpty().withMessage('Type is required'),
+  body('isLoyaltyReward').optional().isBoolean().withMessage('isLoyaltyReward must be a boolean'),
   handleValidationErrors
 ];
 
@@ -90,6 +91,7 @@ export const validateUpdateReward = [
   param('id').notEmpty().withMessage('Reward ID is required'),
   body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
   body('description').optional().trim().notEmpty().withMessage('Description cannot be empty'),
+  body('isLoyaltyReward').optional().isBoolean().withMessage('isLoyaltyReward must be a boolean'),
   handleValidationErrors
 ];
 
@@ -116,3 +118,13 @@ export const validateSpinRaffle = [
 ];
 
 export const validateAddVisit = [body('userId').notEmpty().withMessage('User ID is required'), handleValidationErrors];
+
+export const validateRevealCard = [
+  body('cardIndex').isInt({ min: 0, max: 9 }).withMessage('cardIndex must be an integer between 0 and 9'),
+  handleValidationErrors
+];
+
+export const validateSearchUsers = [
+  query('q').trim().isLength({ min: 2 }).withMessage('Query must be at least 2 characters'),
+  handleValidationErrors
+];

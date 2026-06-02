@@ -1,5 +1,6 @@
 import { RegisterUseCase } from '../application/RegisterUseCase.js';
 import { LoginUseCase } from '../application/LoginUseCase.js';
+import { SearchUsersUseCase } from '../application/SearchUsersUseCase.js';
 import { MongoUserRepository } from './MongoUserRepository.js';
 import BcryptService from '../../../shared/infrastructure/bcrypt/BcryptService.js';
 import JwtService from '../../../shared/infrastructure/jwt/JwtService.js';
@@ -8,6 +9,7 @@ import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 const userRepository = new MongoUserRepository();
 const registerUseCase = new RegisterUseCase(userRepository, BcryptService);
 const loginUseCase = new LoginUseCase(userRepository, JwtService, BcryptService);
+const searchUsersUseCase = new SearchUsersUseCase(userRepository);
 
 export class AuthController {
   async register(req, res) {
@@ -70,6 +72,21 @@ export class AuthController {
       res.status(statusCode).json(body);
     } catch (error) {
       res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+    }
+  }
+
+  async searchUsers(req, res) {
+    try {
+      const { q } = req.query;
+      if (!q || q.trim().length < 2) {
+        return res.status(400).json({ success: false, message: 'Query must be at least 2 characters' });
+      }
+      const users = await searchUsersUseCase.execute(q.trim());
+      const { statusCode, body } = ApiResponse.success(users);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, 500);
+      res.status(statusCode).json(body);
     }
   }
 }

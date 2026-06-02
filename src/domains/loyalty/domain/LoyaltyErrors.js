@@ -11,3 +11,21 @@ export class RewardAlreadyClaimed extends DomainError {
     super('Reward has already been claimed', 409);
   }
 }
+
+export class MinigameNotStarted extends DomainError {
+  constructor() {
+    super('Minigame not started. Call GET /loyalty/minigame first', 400);
+  }
+}
+
+export class CardAlreadyRevealed extends DomainError {
+  constructor() {
+    super('This card has already been revealed', 409);
+  }
+}
+
+export class NoLoyaltyRewardsAvailable extends DomainError {
+  constructor() {
+    super('No loyalty rewards available', 400);
+  }
+}

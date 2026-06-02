@@ -3,8 +3,8 @@ import { VoteForRewardUseCase } from '../application/VoteForRewardUseCase.js';
 import { SpinRaffleUseCase } from '../application/SpinRaffleUseCase.js';
 import { GetVotesUseCase } from '../application/GetVotesUseCase.js';
 import { MongoRaffleRepository } from './MongoRaffleRepository.js';
-import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
-import { notifyRaffleWinner, notifyRaffleUpdate } from '../../../shared/infrastructure/socket/SocketManager.js';
+import { RaffleModel } from './RaffleModel.js';
+import { RewardVoteModel } from './RewardVoteModel.js';
 
 const raffleRepository = new MongoRaffleRepository();
 const getCurrentRaffleUseCase = new GetCurrentRaffleUseCase(raffleRepository);
@@ -15,26 +15,53 @@ const getVotesUseCase = new GetVotesUseCase(raffleRepository);
 export class RaffleController {
   async getCurrent(req, res) {
     try {
-      const result = await getCurrentRaffleUseCase.execute();
-      const { statusCode, body } = ApiResponse.success(result);
-      res.status(statusCode).json(body);
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      const raffle = await RaffleModel.findOne({ month });
+
+      if (!raffle) {
+        return res.status(404).json({ success: false, message: 'No hay sorteo este mes' });
+      }
+
+      res.json({ success: true, data: raffle });
     } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
-      res.status(statusCode).json(body);
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 
   async vote(req, res) {
     try {
       const { rewardId, raffleId } = req.body;
-      const user = req.user;
+      const userId = req.user.id;
 
-      const vote = await voteForRewardUseCase.execute(user, raffleId, rewardId);
-      const { statusCode, body } = ApiResponse.created(vote);
-      res.status(statusCode).json(body);
+      console.log('Votando - userId:', userId);
+      console.log('Votando - raffleId:', raffleId);
+      console.log('Votando - rewardId:', rewardId);
+
+      const existingVote = await RewardVoteModel.findOne({
+        userId,
+        raffleId
+      });
+
+      console.log('Voto existente encontrado:', existingVote);
+
+      if (existingVote) {
+        return res.status(400).json({
+          success: false,
+          message: 'Ya votaste este mes'
+        });
+      }
+
+      const vote = await RewardVoteModel.create({
+        userId,
+        rewardId,
+        raffleId
+      });
+
+      res.status(201).json({ success: true, data: vote });
     } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
-      res.status(statusCode).json(body);
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -48,14 +75,9 @@ export class RaffleController {
       }
 
       const raffle = await spinRaffleUseCase.execute(user, raffleId);
-
-      notifyRaffleWinner(raffle);
-
-      const { statusCode, body } = ApiResponse.success(raffle);
-      res.status(statusCode).json(body);
+      res.json({ success: true, data: raffle });
     } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
-      res.status(statusCode).json(body);
+      res.status(error.statusCode || 500).json({ success: false, message: error.message });
     }
   }
 
@@ -64,19 +86,20 @@ export class RaffleController {
       const now = new Date();
       const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      const raffle = await raffleRepository.findByMonth(month);
+      const raffle = await RaffleModel.findOne({ month });
 
       if (!raffle) {
-        const { statusCode, body } = ApiResponse.success([]);
-        return res.status(statusCode).json(body);
+        return res.json({ success: true, data: [] });
       }
 
-      const votes = await getVotesUseCase.execute(raffle._id);
-      const { statusCode, body } = ApiResponse.success(votes);
-      res.status(statusCode).json(body);
+      // Retornar TODOS los votos del sorteo, no filtrar por usuario
+      const votes = await RewardVoteModel.find({ raffleId: raffle._id });
+
+      console.log('Total votos encontrados:', votes.length);
+
+      res.json({ success: true, data: votes });
     } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message);
-      res.status(statusCode).json(body);
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 
@@ -87,20 +110,17 @@ export class RaffleController {
         return res.status(400).json({ success: false, message: 'month and raffleDate are required' });
       }
 
-      const raffle = await raffleRepository.save({
+      const raffle = await RaffleModel.create({
         month,
         status: status || 'voting',
         raffleDate: new Date(raffleDate),
-        participants: []
+        participants: [],
+        createdAt: new Date()
       });
 
-      notifyRaffleUpdate(raffle);
-
-      const { statusCode, body } = ApiResponse.created(raffle);
-      res.status(statusCode).json(body);
+      res.status(201).json({ success: true, data: raffle });
     } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message);
-      res.status(statusCode).json(body);
+      res.status(500).json({ success: false, message: error.message });
     }
   }
 }

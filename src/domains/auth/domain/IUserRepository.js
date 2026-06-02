@@ -33,4 +33,13 @@ export class IUserRepository {
   async update(user) {
     throw new Error('Method not implemented');
   }
+
+  /**
+   * @param {string} query
+   * @param {number} [limit]
+   * @returns {Promise<import('./User.entity').User[]>}
+   */
+  async search(query, limit) {
+    throw new Error('Method not implemented');
+  }
 }

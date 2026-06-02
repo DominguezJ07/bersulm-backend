@@ -22,26 +22,31 @@ export class MongoLoyaltyRepository extends ILoyaltyRepository {
       currentCycle: card.currentCycle,
       rewardId: card.rewardId,
       rewardWon: card.rewardWon,
-      claimedAt: card.claimedAt
+      claimedAt: card.claimedAt,
+      minigameCards: card.minigameCards
     });
     const saved = await doc.save();
     return this._mapToEntity(saved.toObject());
   }
 
   async update(card) {
-    const updated = await LoyaltyCardModel.findByIdAndUpdate(
-      card._id,
-      {
-        visits: card.visits,
-        totalVisits: card.totalVisits,
-        status: card.status,
-        currentCycle: card.currentCycle,
-        rewardId: card.rewardId,
-        rewardWon: card.rewardWon,
-        claimedAt: card.claimedAt
-      },
-      { new: true }
-    ).lean();
+    const updateData = {
+      visits: card.visits,
+      totalVisits: card.totalVisits,
+      status: card.status,
+      currentCycle: card.currentCycle,
+      rewardId: card.rewardId,
+      rewardWon: card.rewardWon,
+      claimedAt: card.claimedAt
+    };
+
+    if (card.minigameCards) {
+      updateData.minigameCards = card.minigameCards;
+    }
+
+    const updateOp = card.minigameCards ? { $set: updateData } : { $set: updateData, $unset: { minigameCards: 1 } };
+
+    const updated = await LoyaltyCardModel.findByIdAndUpdate(card._id, updateOp, { new: true }).lean();
     return updated ? this._mapToEntity(updated) : null;
   }
 
@@ -74,7 +79,8 @@ export class MongoLoyaltyRepository extends ILoyaltyRepository {
       rewardId: doc.rewardId?.toString(),
       rewardWon: doc.rewardWon,
       claimedAt: doc.claimedAt,
-      createdAt: doc.createdAt
+      createdAt: doc.createdAt,
+      minigameCards: doc.minigameCards
     });
   }
 }

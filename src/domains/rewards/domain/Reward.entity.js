@@ -6,6 +6,7 @@
  * @property {string} icon
  * @property {'corte' | 'descuento' | 'bebida' | 'tratamiento' | 'kit' | 'perfilado'} type
  * @property {boolean} [isActive]
+ * @property {boolean} [isLoyaltyReward]
  * @property {Date} [createdAt]
  */
 
@@ -20,6 +21,7 @@ export class Reward {
     this.icon = props.icon;
     this.type = props.type;
     this.isActive = props.isActive !== undefined ? props.isActive : true;
+    this.isLoyaltyReward = props.isLoyaltyReward !== undefined ? props.isLoyaltyReward : false;
     this.createdAt = props.createdAt || new Date();
   }
 
@@ -31,6 +33,7 @@ export class Reward {
     return new Reward({
       ...props,
       isActive: props.isActive !== undefined ? props.isActive : true,
+      isLoyaltyReward: props.isLoyaltyReward !== undefined ? props.isLoyaltyReward : false,
       createdAt: new Date()
     });
   }

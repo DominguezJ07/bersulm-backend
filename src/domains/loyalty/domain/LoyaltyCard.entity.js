@@ -10,6 +10,7 @@
  * @property {string} [rewardWon]
  * @property {Date} [claimedAt]
  * @property {Date} [createdAt]
+ * @property {Array<{position: number, rewardId: string|null, rewardName: string|null, isWinner: boolean, revealed: boolean}>} [minigameCards]
  */
 
 export class LoyaltyCard {
@@ -27,6 +28,7 @@ export class LoyaltyCard {
     this.rewardWon = props.rewardWon;
     this.claimedAt = props.claimedAt;
     this.createdAt = props.createdAt || new Date();
+    this.minigameCards = props.minigameCards;
   }
 
   /**

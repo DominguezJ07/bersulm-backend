@@ -100,6 +100,37 @@ const rewards = [
   { name: 'Perfilado de Barba', description: 'Perfilado de barba profesional', icon: 'perfilado', type: 'perfilado' }
 ];
 
+const loyaltyRewards = [
+  {
+    name: 'Bebida Gratis',
+    description: 'Disfruta de una bebida gratis en tu visita',
+    icon: 'bebida',
+    type: 'bebida',
+    isLoyaltyReward: true
+  },
+  {
+    name: '30% Descuento Fidelidad',
+    description: '30% de descuento en tu próximo servicio',
+    icon: 'descuento',
+    type: 'descuento',
+    isLoyaltyReward: true
+  },
+  {
+    name: '10% Descuento Fidelidad',
+    description: '10% de descuento en tu próximo servicio',
+    icon: 'descuento',
+    type: 'descuento',
+    isLoyaltyReward: true
+  },
+  {
+    name: 'Perfilado de Cejas',
+    description: 'Perfilado de cejas gratuito',
+    icon: 'perfilado',
+    type: 'perfilado',
+    isLoyaltyReward: true
+  }
+];
+
 const getCurrentMonthRaffle = () => {
   const today = new Date();
   const monthString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -152,6 +183,16 @@ export const runSeed = async () => {
         console.log(`Reward created: ${reward.name}`);
       } else {
         console.log(`Reward already exists, skipping: ${reward.name}`);
+      }
+    }
+
+    for (const reward of loyaltyRewards) {
+      const existingReward = await RewardModel.findOne({ name: reward.name });
+      if (!existingReward) {
+        await RewardModel.create(reward);
+        console.log(`Loyalty reward created: ${reward.name}`);
+      } else {
+        console.log(`Loyalty reward already exists, skipping: ${reward.name}`);
       }
     }
 

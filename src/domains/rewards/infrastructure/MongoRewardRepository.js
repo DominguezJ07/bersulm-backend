@@ -5,7 +5,12 @@ import { IRewardRepository } from '../domain/IRewardRepository.js';
 export class MongoRewardRepository extends IRewardRepository {
   async findAll() {
     const docs = await RewardModel.find().lean();
-    return docs.map(doc => this._mapToEntity(doc));
+    return docs.map((doc) => this._mapToEntity(doc));
+  }
+
+  async findLoyaltyRewards() {
+    const docs = await RewardModel.find({ isLoyaltyReward: true, isActive: true }).lean();
+    return docs.map((doc) => this._mapToEntity(doc));
   }
 
   async findById(id) {
@@ -19,7 +24,8 @@ export class MongoRewardRepository extends IRewardRepository {
       description: reward.description,
       icon: reward.icon,
       type: reward.type,
-      isActive: reward.isActive
+      isActive: reward.isActive,
+      isLoyaltyReward: reward.isLoyaltyReward
     });
     const saved = await doc.save();
     return this._mapToEntity(saved.toObject());
@@ -33,7 +39,8 @@ export class MongoRewardRepository extends IRewardRepository {
         description: reward.description,
         icon: reward.icon,
         type: reward.type,
-        isActive: reward.isActive
+        isActive: reward.isActive,
+        isLoyaltyReward: reward.isLoyaltyReward
       },
       { new: true }
     ).lean();
@@ -52,6 +59,7 @@ export class MongoRewardRepository extends IRewardRepository {
       icon: doc.icon,
       type: doc.type,
       isActive: doc.isActive,
+      isLoyaltyReward: doc.isLoyaltyReward,
       createdAt: doc.createdAt
     });
   }

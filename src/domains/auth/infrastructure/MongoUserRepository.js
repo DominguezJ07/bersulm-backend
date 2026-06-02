@@ -58,6 +58,16 @@ export class MongoUserRepository extends IUserRepository {
     return this._mapToEntity(updatedDoc);
   }
 
+  async search(query, limit = 20) {
+    const regex = new RegExp(query, 'i');
+    const docs = await UserModel.find({
+      $or: [{ name: regex }, { email: regex }, { phone: regex }]
+    })
+      .limit(limit)
+      .lean();
+    return docs.map((doc) => this._mapToEntity(doc));
+  }
+
   _mapToEntity(doc) {
     return new User({
       _id: doc._id.toString(),
