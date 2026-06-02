@@ -15,7 +15,7 @@
     "seed": "node src/database/seeders/seed.js",
     "commit": "git add . && git commit --no-edit",
     "push": "git add . && git commit --no-edit && git push origin HEAD",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "keywords": [],
   "author": "",
