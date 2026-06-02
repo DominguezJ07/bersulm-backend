@@ -7,7 +7,7 @@ import { AppointmentModel } from '../../../domains/appointments/infrastructure/A
 const logger = pino({
   name: 'raffle-cron',
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined
+  transport: process.env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined
 });
 
 const isLastDayOfMonth = (date) => {
