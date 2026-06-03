@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { RaffleModel } from './RaffleModel.js';
 import { RewardVoteModel } from './RewardVoteModel.js';
 import { Raffle } from '../domain/Raffle.entity.js';
@@ -62,20 +63,53 @@ export class MongoRaffleRepository extends IRaffleRepository {
   }
 
   async addParticipant(raffleId, userId) {
-    await RaffleModel.updateOne(
-      { _id: raffleId, participants: { $ne: userId } },
-      { $push: { participants: userId } }
-    );
+    await RaffleModel.updateOne({ _id: raffleId, participants: { $ne: userId } }, { $push: { participants: userId } });
   }
 
   async getVotesByRaffle(raffleId) {
     const docs = await RewardVoteModel.find({ raffleId }).lean();
-    return docs.map(doc => this._mapToVote(doc));
+    return docs.map((doc) => this._mapToVote(doc));
   }
 
   async getUserVote(raffleId, userId) {
     const doc = await RewardVoteModel.findOne({ raffleId, userId }).lean();
     return doc ? this._mapToVote(doc) : null;
+  }
+
+  async getAggregatedVotes(raffleId) {
+    const result = await RewardVoteModel.aggregate([
+      { $match: { raffleId: new mongoose.Types.ObjectId(raffleId) } },
+      { $group: { _id: '$rewardId', count: { $sum: 1 } } },
+      {
+        $lookup: {
+          from: 'rewards',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'reward'
+        }
+      },
+      { $unwind: { path: '$reward', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          rewardId: { $toString: '$_id' },
+          name: { $ifNull: ['$reward.name', 'Desconocido'] },
+          icon: { $ifNull: ['$reward.icon', ''] },
+          type: { $ifNull: ['$reward.type', ''] },
+          count: 1
+        }
+      }
+    ]);
+
+    const totalVotes = result.reduce((sum, r) => sum + r.count, 0);
+    return result.map((r) => ({
+      rewardId: r.rewardId,
+      name: r.name,
+      icon: r.icon,
+      type: r.type,
+      count: r.count,
+      percentage: totalVotes > 0 ? Math.round((r.count / totalVotes) * 1000) / 10 : 0
+    }));
   }
 
   _mapToRaffle(doc) {
@@ -86,7 +120,7 @@ export class MongoRaffleRepository extends IRaffleRepository {
       raffleDate: doc.raffleDate,
       winnerId: doc.winnerId?.toString(),
       winnerReward: doc.winnerReward,
-      participants: (doc.participants || []).map(id => id.toString()),
+      participants: (doc.participants || []).map((id) => id.toString()),
       createdAt: doc.createdAt
     });
   }

@@ -3,7 +3,7 @@ import { RaffleController } from './RaffleController.js';
 import { RaffleModel } from './RaffleModel.js';
 import { RewardVoteModel } from './RewardVoteModel.js';
 import { AppointmentModel } from '../../appointments/infrastructure/AppointmentModel.js';
-import { authMiddleware } from '../../../shared/middlewares/auth.middleware.js';
+import { authMiddleware, optionalAuthMiddleware } from '../../../shared/middlewares/auth.middleware.js';
 import { adminMiddleware } from '../../../shared/middlewares/admin.middleware.js';
 import { validateVote, validateCreateRaffle, validateSpinRaffle } from '../../../shared/middlewares/validators.js';
 import env from '../../../config/env.js';
@@ -11,7 +11,7 @@ import env from '../../../config/env.js';
 const router = Router();
 const controller = new RaffleController();
 
-router.get('/current', controller.getCurrent);
+router.get('/current', optionalAuthMiddleware, controller.getCurrent);
 router.get('/votes', authMiddleware, controller.getVotes);
 router.post('/vote', authMiddleware, validateVote, controller.vote);
 router.post('/spin', authMiddleware, adminMiddleware, validateSpinRaffle, controller.spin);

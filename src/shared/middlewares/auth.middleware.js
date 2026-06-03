@@ -20,3 +20,23 @@ export const authMiddleware = (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
+
+export const optionalAuthMiddleware = (req, res, next) => {
+  try {
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+    if (token) {
+      const decoded = JwtService.verifyAccessToken(token);
+      if (decoded && decoded.role) {
+        req.user = {
+          id: decoded.id || decoded._id || decoded.sub,
+          email: decoded.email,
+          role: decoded.role
+        };
+      }
+    }
+  } catch (err) {
+    // token invalid, proceed without user
+  }
+  next();
+};

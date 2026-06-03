@@ -8,16 +8,24 @@ export class GetVotesUseCase {
 
   /**
    * @param {string} raffleId
-   * @returns {Promise<Array<{ rewardId: string, count: number }>>}
+   * @param {string | null} [userId]
+   * @returns {Promise<Object>}
    */
-  async execute(raffleId) {
-    const votes = await this.raffleRepository.getVotesByRaffle(raffleId);
-    const grouped = votes.reduce((acc, vote) => {
-      const rewardId = vote.rewardId;
-      acc[rewardId] = (acc[rewardId] || 0) + 1;
-      return acc;
-    }, {});
+  async execute(raffleId, userId = null) {
+    const votes = await this.raffleRepository.getAggregatedVotes(raffleId);
+    const totalVotes = votes.reduce((sum, v) => sum + v.count, 0);
 
-    return Object.entries(grouped).map(([rewardId, count]) => ({ rewardId, count }));
+    /** @type {Object} */
+    const result = {
+      votes,
+      totalVotes
+    };
+
+    if (userId) {
+      const userVote = await this.raffleRepository.getUserVote(raffleId, userId);
+      result.userHasVoted = !!userVote;
+    }
+
+    return result;
   }
 }

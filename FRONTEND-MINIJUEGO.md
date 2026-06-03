@@ -12,7 +12,7 @@
 | `POST` | `/api/v1/loyalty/minigame/reveal` | Token cliente | Revelar carta del minijuego |
 | `POST` | `/api/v1/loyalty/visit` | Token admin | Agregar visita a un usuario |
 | `GET` | `/api/v1/auth/users/search?q=...` | Token admin | Buscar usuarios por nombre/email/teléfono |
-
+npm
 ---
 
 ## 2. Respuestas de cada endpoint

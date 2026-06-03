@@ -1,4 +1,5 @@
 import { RaffleNotFound } from '../domain/RaffleErrors.js';
+import { ForbiddenError } from '../../../shared/domain/DomainError.js';
 
 export class SpinRaffleUseCase {
   /**
@@ -16,7 +17,7 @@ export class SpinRaffleUseCase {
    */
   async execute(user, raffleId) {
     if (!user || user.role !== 'admin') {
-      throw new Error('Admin privileges required');
+      throw new ForbiddenError('Admin privileges required');
     }
 
     const raffle = await this.raffleRepository.findById(raffleId);
@@ -27,18 +28,13 @@ export class SpinRaffleUseCase {
     if (!raffle.participants || raffle.participants.length === 0) {
       raffle.status = 'completed';
       raffle.winnerId = null;
-      raffle.winnerReward = null;
       return await this.raffleRepository.update(raffle);
     }
 
     const randomIndex = Math.floor(Math.random() * raffle.participants.length);
     const winnerId = raffle.participants[randomIndex];
 
-    const votes = await this.raffleRepository.getVotesByRaffle(raffleId);
-    const winnerVote = votes.find(vote => vote.userId === winnerId);
-
     raffle.winnerId = winnerId;
-    raffle.winnerReward = winnerVote ? winnerVote.rewardId : null;
     raffle.status = 'completed';
 
     return await this.raffleRepository.update(raffle);

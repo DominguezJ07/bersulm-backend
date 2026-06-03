@@ -11,12 +11,18 @@ export class VoteForRewardUseCase {
 
   /**
    * @param {Object} user
+   * @param {string} user.id
    * @param {string} user._id
    * @param {string} raffleId
    * @param {string} rewardId
    * @returns {Promise<import('../domain/RewardVote.entity').RewardVote>}
    */
   async execute(user, raffleId, rewardId) {
+    const userId = user.id || user._id;
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
     const raffle = await this.raffleRepository.findById(raffleId);
     if (!raffle) {
       throw new RaffleNotFound();
@@ -26,15 +32,15 @@ export class VoteForRewardUseCase {
       throw new RaffleNotInVotingPhase();
     }
 
-    const existingVote = await this.raffleRepository.getUserVote(raffleId, user._id || user.id);
+    const existingVote = await this.raffleRepository.getUserVote(raffleId, userId);
     if (existingVote) {
       throw new AlreadyVoted();
     }
 
-    await this.raffleRepository.addParticipant(raffleId, user._id || user.id);
+    await this.raffleRepository.addParticipant(raffleId, userId);
 
     const vote = RewardVote.create({
-      userId: user._id || user.id,
+      userId,
       rewardId,
       raffleId
     });

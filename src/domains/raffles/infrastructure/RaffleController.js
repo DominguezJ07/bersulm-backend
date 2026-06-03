@@ -3,11 +3,13 @@ import { VoteForRewardUseCase } from '../application/VoteForRewardUseCase.js';
 import { SpinRaffleUseCase } from '../application/SpinRaffleUseCase.js';
 import { GetVotesUseCase } from '../application/GetVotesUseCase.js';
 import { MongoRaffleRepository } from './MongoRaffleRepository.js';
+import { MongoRewardRepository } from '../../rewards/infrastructure/MongoRewardRepository.js';
 import { RaffleModel } from './RaffleModel.js';
-import { RewardVoteModel } from './RewardVoteModel.js';
+import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
 const raffleRepository = new MongoRaffleRepository();
-const getCurrentRaffleUseCase = new GetCurrentRaffleUseCase(raffleRepository);
+const rewardRepository = new MongoRewardRepository();
+const getCurrentRaffleUseCase = new GetCurrentRaffleUseCase(raffleRepository, rewardRepository);
 const voteForRewardUseCase = new VoteForRewardUseCase(raffleRepository);
 const spinRaffleUseCase = new SpinRaffleUseCase(raffleRepository);
 const getVotesUseCase = new GetVotesUseCase(raffleRepository);
@@ -15,53 +17,25 @@ const getVotesUseCase = new GetVotesUseCase(raffleRepository);
 export class RaffleController {
   async getCurrent(req, res) {
     try {
-      const now = new Date();
-      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-      const raffle = await RaffleModel.findOne({ month });
-
-      if (!raffle) {
-        return res.status(404).json({ success: false, message: 'No hay sorteo este mes' });
-      }
-
-      res.json({ success: true, data: raffle });
+      const userId = req.user?.id || null;
+      const result = await getCurrentRaffleUseCase.execute(userId);
+      const { statusCode, body } = ApiResponse.success(result);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
   async vote(req, res) {
     try {
       const { rewardId, raffleId } = req.body;
-      const userId = req.user.id;
-
-      console.log('Votando - userId:', userId);
-      console.log('Votando - raffleId:', raffleId);
-      console.log('Votando - rewardId:', rewardId);
-
-      const existingVote = await RewardVoteModel.findOne({
-        userId,
-        raffleId
-      });
-
-      console.log('Voto existente encontrado:', existingVote);
-
-      if (existingVote) {
-        return res.status(400).json({
-          success: false,
-          message: 'Ya votaste este mes'
-        });
-      }
-
-      const vote = await RewardVoteModel.create({
-        userId,
-        rewardId,
-        raffleId
-      });
-
-      res.status(201).json({ success: true, data: vote });
+      const vote = await voteForRewardUseCase.execute(req.user, raffleId, rewardId);
+      const { statusCode, body } = ApiResponse.created(vote);
+      res.status(statusCode).json(body);
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 
@@ -89,15 +63,13 @@ export class RaffleController {
       const raffle = await RaffleModel.findOne({ month });
 
       if (!raffle) {
-        return res.json({ success: true, data: [] });
+        return res.json({ success: true, data: { votes: [], totalVotes: 0 } });
       }
 
-      // Retornar TODOS los votos del sorteo, no filtrar por usuario
-      const votes = await RewardVoteModel.find({ raffleId: raffle._id });
+      const userId = req.user?.id || null;
+      const result = await getVotesUseCase.execute(raffle._id.toString(), userId);
 
-      console.log('Total votos encontrados:', votes.length);
-
-      res.json({ success: true, data: votes });
+      res.json({ success: true, data: result });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
