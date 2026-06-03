@@ -1,4 +1,12 @@
 /**
+ * @typedef {Object} ManualParticipant
+ * @property {string} [_id]
+ * @property {string} name
+ * @property {string} [userId]
+ * @property {number} [order]
+ */
+
+/**
  * @typedef {Object} RaffleProps
  * @property {string} [_id]
  * @property {string} month
@@ -7,6 +15,7 @@
  * @property {string} [winnerId]
  * @property {string} [winnerReward]
  * @property {string[]} [participants]
+ * @property {ManualParticipant[]} [manualParticipants]
  * @property {Date} [createdAt]
  */
 
@@ -22,6 +31,7 @@ export class Raffle {
     this.winnerId = props.winnerId;
     this.winnerReward = props.winnerReward;
     this.participants = props.participants || [];
+    this.manualParticipants = props.manualParticipants || [];
     this.createdAt = props.createdAt || new Date();
   }
 
@@ -34,6 +44,7 @@ export class Raffle {
       ...props,
       status: props.status || 'scheduled',
       participants: props.participants || [],
+      manualParticipants: props.manualParticipants || [],
       createdAt: new Date()
     });
   }

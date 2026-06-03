@@ -63,6 +63,12 @@ export const notifyRaffleWinner = (raffle) => {
   }
 };
 
+export const notifyVotingEnded = (data) => {
+  if (io) {
+    io.to('global').emit('raffle:voting-ended', data);
+  }
+};
+
 export const notifyLoyaltyUpdate = (card) => {
   if (io) {
     io.to(`user:${card.userId}`).emit('loyalty:updated', card);

@@ -20,21 +20,24 @@ export class SpinRaffleUseCase {
       throw new ForbiddenError('Admin privileges required');
     }
 
-    const raffle = await this.raffleRepository.findById(raffleId);
+    const raffle = await this.raffleRepository.findByIdWithParticipants(raffleId);
     if (!raffle) {
       throw new RaffleNotFound();
     }
 
-    if (!raffle.participants || raffle.participants.length === 0) {
+    const manualParticipants = raffle.manualParticipants || [];
+
+    if (manualParticipants.length === 0) {
       raffle.status = 'completed';
       raffle.winnerId = null;
+      raffle.winnerReward = raffle.winnerReward || null;
       return await this.raffleRepository.update(raffle);
     }
 
-    const randomIndex = Math.floor(Math.random() * raffle.participants.length);
-    const winnerId = raffle.participants[randomIndex];
+    const randomIndex = Math.floor(Math.random() * manualParticipants.length);
+    const winner = manualParticipants[randomIndex];
 
-    raffle.winnerId = winnerId;
+    raffle.winnerId = winner.userId || winner._id;
     raffle.status = 'completed';
 
     return await this.raffleRepository.update(raffle);

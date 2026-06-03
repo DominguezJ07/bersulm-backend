@@ -5,7 +5,13 @@ import { RewardVoteModel } from './RewardVoteModel.js';
 import { AppointmentModel } from '../../appointments/infrastructure/AppointmentModel.js';
 import { authMiddleware, optionalAuthMiddleware } from '../../../shared/middlewares/auth.middleware.js';
 import { adminMiddleware } from '../../../shared/middlewares/admin.middleware.js';
-import { validateVote, validateCreateRaffle, validateSpinRaffle } from '../../../shared/middlewares/validators.js';
+import {
+  validateVote,
+  validateCreateRaffle,
+  validateSpinRaffle,
+  validateAddManualParticipant,
+  validateRemoveManualParticipant
+} from '../../../shared/middlewares/validators.js';
 import env from '../../../config/env.js';
 
 const router = Router();
@@ -16,6 +22,15 @@ router.get('/votes', authMiddleware, controller.getVotes);
 router.post('/vote', authMiddleware, validateVote, controller.vote);
 router.post('/spin', authMiddleware, adminMiddleware, validateSpinRaffle, controller.spin);
 router.post('/create-monthly', authMiddleware, adminMiddleware, validateCreateRaffle, controller.createMonthly);
+router.post('/participants', authMiddleware, adminMiddleware, validateAddManualParticipant, controller.addParticipant);
+router.delete(
+  '/participants/:raffleId/:participantId',
+  authMiddleware,
+  adminMiddleware,
+  validateRemoveManualParticipant,
+  controller.removeParticipant
+);
+router.get('/participants/:raffleId', authMiddleware, controller.getParticipants);
 
 if (env.NODE_ENV !== 'production') {
   router.post('/test-month-end', authMiddleware, adminMiddleware, async (req, res) => {

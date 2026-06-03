@@ -53,6 +53,7 @@ export class GetCurrentRaffleUseCase {
           : null;
       }
       result.participantCount = (raffle.participants || []).length;
+      result.manualParticipants = raffle.manualParticipants || [];
     }
 
     if (raffle.status === 'completed') {

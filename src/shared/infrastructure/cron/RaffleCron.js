@@ -3,6 +3,10 @@ import pino from 'pino';
 import { RaffleModel } from '../../../domains/raffles/infrastructure/RaffleModel.js';
 import { RewardVoteModel } from '../../../domains/raffles/infrastructure/RewardVoteModel.js';
 import { AppointmentModel } from '../../../domains/appointments/infrastructure/AppointmentModel.js';
+import { RewardModel } from '../../../domains/rewards/infrastructure/RewardModel.js';
+import { UserModel } from '../../../domains/auth/infrastructure/UserModel.js';
+import { notifyVotingEnded } from '../socket/SocketManager.js';
+import FirebaseService from '../firebase/FirebaseService.js';
 
 const logger = pino({ name: 'raffle-cron' });
 
@@ -47,6 +51,16 @@ export const initRaffleCrons = () => {
 
       const winnerReward = winnerVote.length > 0 ? winnerVote[0]._id.toString() : null;
 
+      let winnerRewardName = 'Sin premio';
+      if (winnerReward) {
+        try {
+          const reward = await RewardModel.findById(winnerReward).select('name').lean();
+          if (reward) winnerRewardName = reward.name;
+        } catch (err) {
+          logger.warn(err, 'Could not fetch reward name for notification');
+        }
+      }
+
       const participants = await AppointmentModel.distinct('userId', {
         status: 'completed',
         date: { $regex: `^${month}-` }
@@ -62,7 +76,38 @@ export const initRaffleCrons = () => {
         { new: true }
       );
 
-      logger.info({ month, winnerReward, participantsCount: participants.length }, 'Sorteo actualizado');
+      logger.info(
+        { month, winnerReward, winnerRewardName, participantsCount: participants.length },
+        'Sorteo actualizado'
+      );
+
+      notifyVotingEnded({
+        raffleId: raffle._id.toString(),
+        month,
+        winnerReward,
+        winnerRewardName,
+        status: 'active'
+      });
+
+      const users = await UserModel.find({
+        fcmTokens: { $exists: true, $not: { $size: 0 } }
+      })
+        .select('fcmTokens')
+        .lean();
+
+      const allTokens = users.flatMap((u) => u.fcmTokens).filter(Boolean);
+
+      if (allTokens.length > 0) {
+        FirebaseService.sendMulticast(allTokens, {
+          title: 'Votaciones cerradas',
+          body: `El premio ganador del sorteo mensual es: ${winnerRewardName}`,
+          data: {
+            type: 'raffle_voting_ended',
+            raffleId: raffle._id.toString(),
+            month
+          }
+        }).catch((err) => logger.error(err, 'Error sending push notifications'));
+      }
     } catch (error) {
       logger.error(error, 'Error en cron último día del mes');
     }
@@ -86,7 +131,8 @@ export const initRaffleCrons = () => {
         month,
         status: 'voting',
         raffleDate,
-        participants: []
+        participants: [],
+        manualParticipants: []
       });
 
       logger.info({ month, raffleDate: raffleDate.toISOString() }, 'Sorteo nuevo mes creado');

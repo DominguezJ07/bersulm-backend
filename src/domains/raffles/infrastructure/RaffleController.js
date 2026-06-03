@@ -2,6 +2,8 @@ import { GetCurrentRaffleUseCase } from '../application/GetCurrentRaffleUseCase.
 import { VoteForRewardUseCase } from '../application/VoteForRewardUseCase.js';
 import { SpinRaffleUseCase } from '../application/SpinRaffleUseCase.js';
 import { GetVotesUseCase } from '../application/GetVotesUseCase.js';
+import { AddManualParticipantUseCase } from '../application/AddManualParticipantUseCase.js';
+import { RemoveManualParticipantUseCase } from '../application/RemoveManualParticipantUseCase.js';
 import { MongoRaffleRepository } from './MongoRaffleRepository.js';
 import { MongoRewardRepository } from '../../rewards/infrastructure/MongoRewardRepository.js';
 import { RaffleModel } from './RaffleModel.js';
@@ -13,6 +15,8 @@ const getCurrentRaffleUseCase = new GetCurrentRaffleUseCase(raffleRepository, re
 const voteForRewardUseCase = new VoteForRewardUseCase(raffleRepository);
 const spinRaffleUseCase = new SpinRaffleUseCase(raffleRepository);
 const getVotesUseCase = new GetVotesUseCase(raffleRepository);
+const addManualParticipantUseCase = new AddManualParticipantUseCase(raffleRepository);
+const removeManualParticipantUseCase = new RemoveManualParticipantUseCase(raffleRepository);
 
 export class RaffleController {
   async getCurrent(req, res) {
@@ -87,12 +91,49 @@ export class RaffleController {
         status: status || 'voting',
         raffleDate: new Date(raffleDate),
         participants: [],
+        manualParticipants: [],
         createdAt: new Date()
       });
 
       res.status(201).json({ success: true, data: raffle });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
+    }
+  }
+
+  async addParticipant(req, res) {
+    try {
+      const { raffleId, name, userId } = req.body;
+      const raffle = await addManualParticipantUseCase.execute(req.user, raffleId, { name, userId });
+      const { statusCode, body } = ApiResponse.success(raffle);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async removeParticipant(req, res) {
+    try {
+      const { raffleId, participantId } = req.params;
+      const raffle = await removeManualParticipantUseCase.execute(req.user, raffleId, participantId);
+      const { statusCode, body } = ApiResponse.success(raffle);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async getParticipants(req, res) {
+    try {
+      const { raffleId } = req.params;
+      const participants = await raffleRepository.getManualParticipants(raffleId);
+      const { statusCode, body } = ApiResponse.success(participants);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
     }
   }
 }

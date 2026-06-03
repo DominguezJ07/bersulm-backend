@@ -125,3 +125,20 @@ export const validateRevealCard = [
 ];
 
 export const validateSearchUsers = [query('q').optional().trim(), handleValidationErrors];
+
+export const validateFcmToken = [
+  body('fcmToken').trim().notEmpty().withMessage('FCM token is required'),
+  handleValidationErrors
+];
+
+export const validateAddManualParticipant = [
+  body('raffleId').notEmpty().withMessage('Raffle ID is required'),
+  body('name').trim().notEmpty().withMessage('Participant name is required'),
+  handleValidationErrors
+];
+
+export const validateRemoveManualParticipant = [
+  param('raffleId').notEmpty().withMessage('Raffle ID is required'),
+  param('participantId').notEmpty().withMessage('Participant ID is required'),
+  handleValidationErrors
+];

@@ -2,6 +2,7 @@ import { RegisterUseCase } from '../application/RegisterUseCase.js';
 import { LoginUseCase } from '../application/LoginUseCase.js';
 import { SearchUsersUseCase } from '../application/SearchUsersUseCase.js';
 import { MongoUserRepository } from './MongoUserRepository.js';
+import { UserModel } from './UserModel.js';
 import BcryptService from '../../../shared/infrastructure/bcrypt/BcryptService.js';
 import JwtService from '../../../shared/infrastructure/jwt/JwtService.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
@@ -80,6 +81,33 @@ export class AuthController {
       const q = req.query.q || '';
       const users = await searchUsersUseCase.execute(q.trim());
       const { statusCode, body } = ApiResponse.success(users);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async registerFcmToken(req, res) {
+    try {
+      const { fcmToken } = req.body;
+      const userId = req.user.id;
+
+      if (!fcmToken) {
+        return res.status(400).json({ success: false, message: 'fcmToken is required' });
+      }
+
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      if (!user.fcmTokens.includes(fcmToken)) {
+        user.fcmTokens.push(fcmToken);
+        await user.save();
+      }
+
+      const { statusCode, body } = ApiResponse.success({ message: 'FCM token registered' });
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);

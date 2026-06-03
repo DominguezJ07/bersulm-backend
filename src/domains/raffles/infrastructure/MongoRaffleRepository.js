@@ -55,7 +55,12 @@ export class MongoRaffleRepository extends IRaffleRepository {
         raffleDate: raffle.raffleDate,
         winnerId: raffle.winnerId,
         winnerReward: raffle.winnerReward,
-        participants: raffle.participants
+        participants: raffle.participants,
+        manualParticipants: (raffle.manualParticipants || []).map((mp) => ({
+          name: mp.name,
+          userId: mp.userId || null,
+          order: mp.order || 0
+        }))
       },
       { new: true }
     ).lean();
@@ -121,6 +126,12 @@ export class MongoRaffleRepository extends IRaffleRepository {
       winnerId: doc.winnerId?.toString(),
       winnerReward: doc.winnerReward,
       participants: (doc.participants || []).map((id) => id.toString()),
+      manualParticipants: (doc.manualParticipants || []).map((mp) => ({
+        _id: mp._id.toString(),
+        name: mp.name,
+        userId: mp.userId?.toString() || null,
+        order: mp.order || 0
+      })),
       createdAt: doc.createdAt
     });
   }
@@ -133,5 +144,40 @@ export class MongoRaffleRepository extends IRaffleRepository {
       raffleId: doc.raffleId.toString(),
       createdAt: doc.createdAt
     });
+  }
+
+  async addManualParticipant(raffleId, { name, userId = null }) {
+    const manualParticipant = { name, userId, order: 0 };
+    const updated = await RaffleModel.findByIdAndUpdate(
+      raffleId,
+      { $push: { manualParticipants: manualParticipant } },
+      { new: true }
+    ).lean();
+    return updated ? this._mapToRaffle(updated) : null;
+  }
+
+  async removeManualParticipant(raffleId, participantId) {
+    const updated = await RaffleModel.findByIdAndUpdate(
+      raffleId,
+      { $pull: { manualParticipants: { _id: participantId } } },
+      { new: true }
+    ).lean();
+    return updated ? this._mapToRaffle(updated) : null;
+  }
+
+  async getManualParticipants(raffleId) {
+    const doc = await RaffleModel.findById(raffleId).select('manualParticipants').lean();
+    if (!doc || !doc.manualParticipants) return [];
+    return doc.manualParticipants.map((mp) => ({
+      _id: mp._id.toString(),
+      name: mp.name,
+      userId: mp.userId?.toString() || null,
+      order: mp.order || 0
+    }));
+  }
+
+  async findByIdWithParticipants(raffleId) {
+    const doc = await RaffleModel.findById(raffleId).lean();
+    return doc ? this._mapToRaffle(doc) : null;
   }
 }

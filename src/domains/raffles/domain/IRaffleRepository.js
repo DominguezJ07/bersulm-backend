@@ -74,4 +74,38 @@ export class IRaffleRepository {
   async getAggregatedVotes(raffleId) {
     throw new Error('Not implemented');
   }
+
+  /**
+   * @param {string} raffleId
+   * @param {{ name: string, userId?: string }} participant
+   * @returns {Promise<import('./Raffle.entity').Raffle>}
+   */
+  async addManualParticipant(raffleId, participant) {
+    throw new Error('Not implemented');
+  }
+
+  /**
+   * @param {string} raffleId
+   * @param {string} participantId
+   * @returns {Promise<import('./Raffle.entity').Raffle>}
+   */
+  async removeManualParticipant(raffleId, participantId) {
+    throw new Error('Not implemented');
+  }
+
+  /**
+   * @param {string} raffleId
+   * @returns {Promise<import('./Raffle.entity').Raffle['manualParticipants']>}
+   */
+  async getManualParticipants(raffleId) {
+    throw new Error('Not implemented');
+  }
+
+  /**
+   * @param {string} raffleId
+   * @returns {Promise<import('./Raffle.entity').Raffle>}
+   */
+  async findByIdWithParticipants(raffleId) {
+    throw new Error('Not implemented');
+  }
 }

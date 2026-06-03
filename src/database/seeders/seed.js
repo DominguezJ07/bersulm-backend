@@ -138,7 +138,9 @@ const getCurrentMonthRaffle = () => {
   return {
     month: monthString,
     status: 'voting',
-    raffleDate
+    raffleDate,
+    participants: [],
+    manualParticipants: []
   };
 };
 
