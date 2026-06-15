@@ -38,7 +38,7 @@ export class CreateAppointmentUseCase {
       if (this.serviceRepository && data.serviceId) {
         service = await this.serviceRepository.findById(data.serviceId);
       }
-      totalPrice = data.price ?? (service && service.price) ?? 0;
+      totalPrice = (service && service.price) ?? 0;
     }
 
     // 3. Create appointment

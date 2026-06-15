@@ -42,4 +42,13 @@ export class IUserRepository {
   async search(query, limit) {
     throw new Error('Method not implemented');
   }
+
+  /**
+   * @param {string} userId
+   * @param {string} fcmToken
+   * @returns {Promise<import('./User.entity').User>}
+   */
+  async addFcmToken(userId, fcmToken) {
+    throw new Error('Method not implemented');
+  }
 }

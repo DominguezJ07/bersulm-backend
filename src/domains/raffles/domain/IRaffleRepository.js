@@ -108,4 +108,12 @@ export class IRaffleRepository {
   async findByIdWithParticipants(raffleId) {
     throw new Error('Not implemented');
   }
+
+  /**
+   * @param {object} raffleData
+   * @returns {Promise<import('./Raffle.entity').Raffle>}
+   */
+  async create(raffleData) {
+    throw new Error('Not implemented');
+  }
 }

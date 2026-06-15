@@ -37,7 +37,7 @@ export class SpinRaffleUseCase {
     const randomIndex = Math.floor(Math.random() * manualParticipants.length);
     const winner = manualParticipants[randomIndex];
 
-    raffle.winnerId = winner.userId || winner._id;
+    raffle.winnerId = winner.userId || null;
     raffle.status = 'completed';
 
     return await this.raffleRepository.update(raffle);

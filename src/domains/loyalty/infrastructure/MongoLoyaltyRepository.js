@@ -62,7 +62,10 @@ export class MongoLoyaltyRepository extends ILoyaltyRepository {
   async resetCard(userId) {
     const doc = await LoyaltyCardModel.findOneAndUpdate(
       { userId },
-      { visits: 0, status: 'active', currentCycle: 1, rewardId: null, rewardWon: null, claimedAt: null },
+      {
+        $set: { visits: 0, status: 'active', currentCycle: 1, rewardId: null, rewardWon: null, claimedAt: null },
+        $unset: { minigameCards: 1 }
+      },
       { new: true }
     ).lean();
     return doc ? this._mapToEntity(doc) : null;

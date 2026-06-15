@@ -70,6 +70,11 @@ export class MongoUserRepository extends IUserRepository {
     return docs.map((doc) => this._mapToEntity(doc));
   }
 
+  async addFcmToken(userId, fcmToken) {
+    const doc = await UserModel.findByIdAndUpdate(userId, { $addToSet: { fcmTokens: fcmToken } }, { new: true }).lean();
+    return doc ? this._mapToEntity(doc) : null;
+  }
+
   _mapToEntity(doc) {
     return new User({
       _id: doc._id.toString(),

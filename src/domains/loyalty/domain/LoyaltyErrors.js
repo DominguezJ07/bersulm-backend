@@ -1,14 +1,14 @@
-import { DomainError } from '../../../shared/domain/DomainError.js';
+import { DomainError, NotFoundError, ConflictError } from '../../../shared/domain/DomainError.js';
 
-export class LoyaltyCardNotFound extends DomainError {
+export class LoyaltyCardNotFound extends NotFoundError {
   constructor() {
-    super('Loyalty card not found', 404);
+    super('Loyalty card not found');
   }
 }
 
-export class RewardAlreadyClaimed extends DomainError {
+export class RewardAlreadyClaimed extends ConflictError {
   constructor() {
-    super('Reward has already been claimed', 409);
+    super('Reward has already been claimed');
   }
 }
 
@@ -18,9 +18,9 @@ export class MinigameNotStarted extends DomainError {
   }
 }
 
-export class CardAlreadyRevealed extends DomainError {
+export class CardAlreadyRevealed extends ConflictError {
   constructor() {
-    super('This card has already been revealed', 409);
+    super('This card has already been revealed');
   }
 }
 

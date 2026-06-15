@@ -21,7 +21,8 @@ const loyaltyCardSchema = new mongoose.Schema(
     ]
   },
   {
-    timestamps: { createdAt: true, updatedAt: false }
+    timestamps: { createdAt: true, updatedAt: false },
+    collection: 'loyalty_cards'
   }
 );
 

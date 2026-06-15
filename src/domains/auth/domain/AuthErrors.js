@@ -1,8 +1,8 @@
-import { DomainError } from '../../../shared/domain/DomainError.js';
+import { DomainError, NotFoundError } from '../../../shared/domain/DomainError.js';
 
-export class UserNotFound extends DomainError {
+export class UserNotFound extends NotFoundError {
   constructor() {
-    super('User not found', 404);
+    super('User not found');
   }
 }
 

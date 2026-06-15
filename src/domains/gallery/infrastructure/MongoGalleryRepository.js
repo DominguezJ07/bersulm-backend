@@ -5,13 +5,13 @@ import { IGalleryRepository } from '../domain/IGalleryRepository.js';
 export class MongoGalleryRepository extends IGalleryRepository {
   async findAll() {
     const docs = await GalleryModel.find().lean();
-    return docs.map(doc => this._mapToEntity(doc));
+    return docs.map((doc) => this._mapToEntity(doc));
   }
 
   async findByCategory(category) {
     const query = category && category !== 'todos' ? { category } : {};
     const docs = await GalleryModel.find(query).lean();
-    return docs.map(doc => this._mapToEntity(doc));
+    return docs.map((doc) => this._mapToEntity(doc));
   }
 
   async findById(id) {
@@ -41,8 +41,7 @@ export class MongoGalleryRepository extends IGalleryRepository {
         category: galleryItem.category,
         isActive: galleryItem.isActive,
         order: galleryItem.order,
-        uploadedBy: galleryItem.uploadedBy,
-        updatedAt: new Date()
+        uploadedBy: galleryItem.uploadedBy
       },
       { new: true }
     ).lean();

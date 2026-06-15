@@ -1,14 +1,14 @@
-import { DomainError } from '../../../shared/domain/DomainError.js';
+import { DomainError, NotFoundError, ConflictError } from '../../../shared/domain/DomainError.js';
 
-export class RaffleNotFound extends DomainError {
+export class RaffleNotFound extends NotFoundError {
   constructor() {
-    super('Raffle not found', 404);
+    super('Raffle not found');
   }
 }
 
-export class AlreadyVoted extends DomainError {
+export class AlreadyVoted extends ConflictError {
   constructor() {
-    super('You have already voted in this raffle', 409);
+    super('You have already voted in this raffle');
   }
 }
 
@@ -24,14 +24,14 @@ export class RaffleNotInActivePhase extends DomainError {
   }
 }
 
-export class ParticipantAlreadyExists extends DomainError {
+export class ParticipantAlreadyExists extends ConflictError {
   constructor(name) {
-    super(`A participant named "${name}" already exists in this raffle`, 409);
+    super(`A participant named "${name}" already exists in this raffle`);
   }
 }
 
-export class ParticipantNotFound extends DomainError {
+export class ParticipantNotFound extends NotFoundError {
   constructor() {
-    super('Participant not found in this raffle', 404);
+    super('Participant not found in this raffle');
   }
 }

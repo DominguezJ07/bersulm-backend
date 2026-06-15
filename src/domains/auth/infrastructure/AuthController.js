@@ -2,7 +2,6 @@ import { RegisterUseCase } from '../application/RegisterUseCase.js';
 import { LoginUseCase } from '../application/LoginUseCase.js';
 import { SearchUsersUseCase } from '../application/SearchUsersUseCase.js';
 import { MongoUserRepository } from './MongoUserRepository.js';
-import { UserModel } from './UserModel.js';
 import BcryptService from '../../../shared/infrastructure/bcrypt/BcryptService.js';
 import JwtService from '../../../shared/infrastructure/jwt/JwtService.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
@@ -97,14 +96,9 @@ export class AuthController {
         return res.status(400).json({ success: false, message: 'fcmToken is required' });
       }
 
-      const user = await UserModel.findById(userId);
+      const user = await userRepository.addFcmToken(userId, fcmToken);
       if (!user) {
         return res.status(404).json({ success: false, message: 'User not found' });
-      }
-
-      if (!user.fcmTokens.includes(fcmToken)) {
-        user.fcmTokens.push(fcmToken);
-        await user.save();
       }
 
       const { statusCode, body } = ApiResponse.success({ message: 'FCM token registered' });

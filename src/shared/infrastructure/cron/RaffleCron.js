@@ -5,7 +5,7 @@ import { RewardVoteModel } from '../../../domains/raffles/infrastructure/RewardV
 import { AppointmentModel } from '../../../domains/appointments/infrastructure/AppointmentModel.js';
 import { RewardModel } from '../../../domains/rewards/infrastructure/RewardModel.js';
 import { UserModel } from '../../../domains/auth/infrastructure/UserModel.js';
-import { notifyVotingEnded } from '../socket/SocketManager.js';
+import { notifyVotingEnded, notifyRaffleUpdate } from '../socket/SocketManager.js';
 import FirebaseService from '../firebase/FirebaseService.js';
 
 const logger = pino({ name: 'raffle-cron' });
@@ -66,7 +66,7 @@ export const initRaffleCrons = () => {
         date: { $regex: `^${month}-` }
       });
 
-      await RaffleModel.findByIdAndUpdate(
+      const updatedRaffle = await RaffleModel.findByIdAndUpdate(
         raffle._id,
         {
           status: 'active',
@@ -74,7 +74,7 @@ export const initRaffleCrons = () => {
           participants
         },
         { new: true }
-      );
+      ).lean();
 
       logger.info(
         { month, winnerReward, winnerRewardName, participantsCount: participants.length },
@@ -88,6 +88,8 @@ export const initRaffleCrons = () => {
         winnerRewardName,
         status: 'active'
       });
+
+      notifyRaffleUpdate(updatedRaffle);
 
       const users = await UserModel.find({
         fcmTokens: { $exists: true, $not: { $size: 0 } }

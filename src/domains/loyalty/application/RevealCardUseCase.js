@@ -46,7 +46,8 @@ export class RevealCardUseCase {
       won: selectedCard.isWinner,
       reward: selectedCard.isWinner ? { id: selectedCard.rewardId, name: selectedCard.rewardName } : null,
       cardStatus: card.status,
-      currentCycle: card.currentCycle
+      currentCycle: card.currentCycle,
+      userId: card.userId
     };
   }
 }

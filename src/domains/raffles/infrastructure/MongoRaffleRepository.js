@@ -40,7 +40,12 @@ export class MongoRaffleRepository extends IRaffleRepository {
       raffleDate: entity.raffleDate,
       winnerId: entity.winnerId,
       winnerReward: entity.winnerReward,
-      participants: entity.participants
+      participants: entity.participants,
+      manualParticipants: (entity.manualParticipants || []).map((mp) => ({
+        name: mp.name,
+        userId: mp.userId || null,
+        order: mp.order || 0
+      }))
     });
     const saved = await raffle.save();
     return this._mapToRaffle(saved.toObject());
@@ -179,5 +184,11 @@ export class MongoRaffleRepository extends IRaffleRepository {
   async findByIdWithParticipants(raffleId) {
     const doc = await RaffleModel.findById(raffleId).lean();
     return doc ? this._mapToRaffle(doc) : null;
+  }
+
+  async create(raffleData) {
+    const doc = new RaffleModel(raffleData);
+    const saved = await doc.save();
+    return saved.toObject();
   }
 }
