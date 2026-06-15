@@ -1,18 +1,17 @@
-import { GetServicesUseCase } from '../application/GetServicesUseCase.js';
-import { CreateServiceUseCase } from '../application/CreateServiceUseCase.js';
-import { UpdateServiceUseCase } from '../application/UpdateServiceUseCase.js';
-import { MongoServiceRepository } from './MongoServiceRepository.js';
+import { useCases, repos } from '../../../shared/infrastructure/container.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
-const serviceRepository = new MongoServiceRepository();
-const getServicesUseCase = new GetServicesUseCase(serviceRepository);
-const createServiceUseCase = new CreateServiceUseCase(serviceRepository);
-const updateServiceUseCase = new UpdateServiceUseCase(serviceRepository);
-
 export class ServiceController {
+  constructor() {
+    this.getServicesUseCase = useCases.services.getAll();
+    this.createServiceUseCase = useCases.services.create();
+    this.updateServiceUseCase = useCases.services.update();
+    this.serviceRepository = repos.service();
+  }
+
   async getAll(req, res) {
     try {
-      const services = await getServicesUseCase.execute();
+      const services = await this.getServicesUseCase.execute();
       const { statusCode, body } = ApiResponse.success(services);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -24,7 +23,7 @@ export class ServiceController {
   async getById(req, res) {
     try {
       const { id } = req.params;
-      const service = await serviceRepository.findById(id);
+      const service = await this.serviceRepository.findById(id);
       if (!service) {
         return res.status(404).json({ success: false, message: 'Service not found' });
       }
@@ -38,7 +37,7 @@ export class ServiceController {
 
   async create(req, res) {
     try {
-      const service = await createServiceUseCase.execute(req.body);
+      const service = await this.createServiceUseCase.execute(req.body);
       const { statusCode, body } = ApiResponse.created(service);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -50,7 +49,7 @@ export class ServiceController {
   async update(req, res) {
     try {
       const { id } = req.params;
-      const service = await updateServiceUseCase.execute(id, req.body);
+      const service = await this.updateServiceUseCase.execute(id, req.body);
       const { statusCode, body } = ApiResponse.success(service);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -62,7 +61,7 @@ export class ServiceController {
   async delete(req, res) {
     try {
       const { id } = req.params;
-      await serviceRepository.delete(id);
+      await this.serviceRepository.delete(id);
       res.status(204).send();
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message);

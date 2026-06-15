@@ -1,19 +1,17 @@
-import { GetGalleryUseCase } from '../application/GetGalleryUseCase.js';
-import { CreateGalleryItemUseCase } from '../application/CreateGalleryItemUseCase.js';
-import { DeleteGalleryItemUseCase } from '../application/DeleteGalleryItemUseCase.js';
-import { MongoGalleryRepository } from './MongoGalleryRepository.js';
+import { useCases } from '../../../shared/infrastructure/container.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
-const galleryRepository = new MongoGalleryRepository();
-const getGalleryUseCase = new GetGalleryUseCase(galleryRepository);
-const createGalleryItemUseCase = new CreateGalleryItemUseCase(galleryRepository);
-const deleteGalleryItemUseCase = new DeleteGalleryItemUseCase(galleryRepository);
-
 export class GalleryController {
+  constructor() {
+    this.getGalleryUseCase = useCases.gallery.getAll();
+    this.createGalleryItemUseCase = useCases.gallery.create();
+    this.deleteGalleryItemUseCase = useCases.gallery.delete();
+  }
+
   async getAll(req, res) {
     try {
       const { category } = req.query;
-      const items = await getGalleryUseCase.execute(category);
+      const items = await this.getGalleryUseCase.execute(category);
       const { statusCode, body } = ApiResponse.success(items);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -31,7 +29,7 @@ export class GalleryController {
         return res.status(400).json({ success: false, message: 'imageUrl, title and category are required' });
       }
 
-      const item = await createGalleryItemUseCase.execute(user, {
+      const item = await this.createGalleryItemUseCase.execute(user, {
         imageUrl,
         title,
         category,
@@ -56,7 +54,7 @@ export class GalleryController {
         return res.status(400).json({ success: false, message: 'Gallery item id is required' });
       }
 
-      await deleteGalleryItemUseCase.execute(user, id);
+      await this.deleteGalleryItemUseCase.execute(user, id);
       res.status(204).send();
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);

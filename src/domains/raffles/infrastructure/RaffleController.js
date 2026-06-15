@@ -1,32 +1,23 @@
-import { GetCurrentRaffleUseCase } from '../application/GetCurrentRaffleUseCase.js';
-import { VoteForRewardUseCase } from '../application/VoteForRewardUseCase.js';
-import { SpinRaffleUseCase } from '../application/SpinRaffleUseCase.js';
-import { GetVotesUseCase } from '../application/GetVotesUseCase.js';
-import { AddManualParticipantUseCase } from '../application/AddManualParticipantUseCase.js';
-import { RemoveManualParticipantUseCase } from '../application/RemoveManualParticipantUseCase.js';
-import { CreateMonthlyRaffleUseCase } from '../application/CreateMonthlyRaffleUseCase.js';
-import { GetVotesByMonthUseCase } from '../application/GetVotesByMonthUseCase.js';
-import { MongoRaffleRepository } from './MongoRaffleRepository.js';
-import { MongoRewardRepository } from '../../rewards/infrastructure/MongoRewardRepository.js';
+import { useCases, repos } from '../../../shared/infrastructure/container.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 import { notifyRaffleWinner } from '../../../shared/infrastructure/socket/SocketManager.js';
 
-const raffleRepository = new MongoRaffleRepository();
-const rewardRepository = new MongoRewardRepository();
-const getCurrentRaffleUseCase = new GetCurrentRaffleUseCase(raffleRepository, rewardRepository);
-const voteForRewardUseCase = new VoteForRewardUseCase(raffleRepository);
-const spinRaffleUseCase = new SpinRaffleUseCase(raffleRepository);
-const getVotesUseCase = new GetVotesUseCase(raffleRepository);
-const addManualParticipantUseCase = new AddManualParticipantUseCase(raffleRepository);
-const removeManualParticipantUseCase = new RemoveManualParticipantUseCase(raffleRepository);
-const createMonthlyRaffleUseCase = new CreateMonthlyRaffleUseCase(raffleRepository);
-const getVotesByMonthUseCase = new GetVotesByMonthUseCase(raffleRepository);
-
 export class RaffleController {
+  constructor() {
+    this.getCurrentRaffleUseCase = useCases.raffles.getCurrent();
+    this.voteForRewardUseCase = useCases.raffles.vote();
+    this.spinRaffleUseCase = useCases.raffles.spin();
+    this.getVotesByMonthUseCase = useCases.raffles.getVotesByMonth();
+    this.createMonthlyRaffleUseCase = useCases.raffles.createMonthly();
+    this.addManualParticipantUseCase = useCases.raffles.addParticipant();
+    this.removeManualParticipantUseCase = useCases.raffles.removeParticipant();
+    this.raffleRepository = repos.raffle();
+  }
+
   async getCurrent(req, res) {
     try {
       const userId = req.user?.id || null;
-      const result = await getCurrentRaffleUseCase.execute(userId);
+      const result = await this.getCurrentRaffleUseCase.execute(userId);
       const { statusCode, body } = ApiResponse.success(result);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -38,7 +29,7 @@ export class RaffleController {
   async vote(req, res) {
     try {
       const { rewardId, raffleId } = req.body;
-      const vote = await voteForRewardUseCase.execute(req.user, raffleId, rewardId);
+      const vote = await this.voteForRewardUseCase.execute(req.user, raffleId, rewardId);
       const { statusCode, body } = ApiResponse.created(vote);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -56,7 +47,7 @@ export class RaffleController {
         return res.status(400).json({ success: false, message: 'raffleId is required' });
       }
 
-      const raffle = await spinRaffleUseCase.execute(user, raffleId);
+      const raffle = await this.spinRaffleUseCase.execute(user, raffleId);
       notifyRaffleWinner(raffle);
       res.json({ success: true, data: raffle });
     } catch (error) {
@@ -67,7 +58,7 @@ export class RaffleController {
   async getVotes(req, res) {
     try {
       const userId = req.user?.id || null;
-      const result = await getVotesByMonthUseCase.execute(userId);
+      const result = await this.getVotesByMonthUseCase.execute(userId);
       const { statusCode, body } = ApiResponse.success(result);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -79,7 +70,7 @@ export class RaffleController {
   async createMonthly(req, res) {
     try {
       const { month, status, raffleDate } = req.body;
-      const raffle = await createMonthlyRaffleUseCase.execute({ month, status, raffleDate });
+      const raffle = await this.createMonthlyRaffleUseCase.execute({ month, status, raffleDate });
       const { statusCode, body } = ApiResponse.created(raffle);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -91,7 +82,7 @@ export class RaffleController {
   async addParticipant(req, res) {
     try {
       const { raffleId, name, userId } = req.body;
-      const raffle = await addManualParticipantUseCase.execute(req.user, raffleId, { name, userId });
+      const raffle = await this.addManualParticipantUseCase.execute(req.user, raffleId, { name, userId });
       const { statusCode, body } = ApiResponse.success(raffle);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -103,7 +94,7 @@ export class RaffleController {
   async removeParticipant(req, res) {
     try {
       const { raffleId, participantId } = req.params;
-      const raffle = await removeManualParticipantUseCase.execute(req.user, raffleId, participantId);
+      const raffle = await this.removeManualParticipantUseCase.execute(req.user, raffleId, participantId);
       const { statusCode, body } = ApiResponse.success(raffle);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -115,7 +106,7 @@ export class RaffleController {
   async getParticipants(req, res) {
     try {
       const { raffleId } = req.params;
-      const participants = await raffleRepository.getManualParticipants(raffleId);
+      const participants = await this.raffleRepository.getManualParticipants(raffleId);
       const { statusCode, body } = ApiResponse.success(participants);
       res.status(statusCode).json(body);
     } catch (error) {

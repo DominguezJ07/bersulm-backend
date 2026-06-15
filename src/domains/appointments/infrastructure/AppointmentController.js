@@ -1,33 +1,18 @@
-import { CreateAppointmentUseCase } from '../application/CreateAppointmentUseCase.js';
-import { GetAvailableSlotsUseCase } from '../application/GetAvailableSlotsUseCase.js';
-import { CancelAppointmentUseCase } from '../application/CancelAppointmentUseCase.js';
-import { GetUserAppointmentsUseCase } from '../application/GetUserAppointmentsUseCase.js';
-import { MongoAppointmentRepository } from './MongoAppointmentRepository.js';
-import { MongoServiceRepository } from '../../services/infrastructure/MongoServiceRepository.js';
-import { MongoLoyaltyRepository } from '../../loyalty/infrastructure/MongoLoyaltyRepository.js';
-import { AddVisitUseCase } from '../../loyalty/application/AddVisitUseCase.js';
-import { MongoRewardRepository } from '../../rewards/infrastructure/MongoRewardRepository.js';
+import { useCases } from '../../../shared/infrastructure/container.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 import {
   notifyNewAppointment,
   notifyCancelledAppointment
 } from '../../../shared/infrastructure/socket/SocketManager.js';
 
-const appointmentRepository = new MongoAppointmentRepository();
-const serviceRepository = new MongoServiceRepository();
-const loyaltyRepository = new MongoLoyaltyRepository();
-const rewardRepository = new MongoRewardRepository();
-const addVisitUseCase = new AddVisitUseCase(loyaltyRepository, rewardRepository);
-const createAppointmentUseCase = new CreateAppointmentUseCase(
-  appointmentRepository,
-  addVisitUseCase,
-  serviceRepository
-);
-const getAvailableSlotsUseCase = new GetAvailableSlotsUseCase(appointmentRepository);
-const cancelAppointmentUseCase = new CancelAppointmentUseCase(appointmentRepository, addVisitUseCase);
-const getUserAppointmentsUseCase = new GetUserAppointmentsUseCase(appointmentRepository);
-
 export class AppointmentController {
+  constructor() {
+    this.createAppointmentUseCase = useCases.appointments.create();
+    this.getAvailableSlotsUseCase = useCases.appointments.getSlots();
+    this.cancelAppointmentUseCase = useCases.appointments.cancel();
+    this.getUserAppointmentsUseCase = useCases.appointments.getUserAppointments();
+  }
+
   async create(req, res) {
     try {
       const userId = req.user.id;
@@ -37,7 +22,7 @@ export class AppointmentController {
         return res.status(400).json({ success: false, message: 'serviceId, date and time are required' });
       }
 
-      const appointment = await createAppointmentUseCase.execute({ userId, serviceId, date, time });
+      const appointment = await this.createAppointmentUseCase.execute({ userId, serviceId, date, time });
 
       notifyNewAppointment(appointment);
 
@@ -56,7 +41,7 @@ export class AppointmentController {
         return res.status(400).json({ success: false, message: 'Date is required' });
       }
 
-      const slots = await getAvailableSlotsUseCase.execute(date);
+      const slots = await this.getAvailableSlotsUseCase.execute(date);
       const { statusCode, body } = ApiResponse.success(slots);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -71,7 +56,7 @@ export class AppointmentController {
       const { reason } = req.body;
       const userId = req.user.id;
 
-      const appointment = await cancelAppointmentUseCase.execute(id, userId, reason);
+      const appointment = await this.cancelAppointmentUseCase.execute(id, userId, reason);
 
       notifyCancelledAppointment(appointment);
 
@@ -90,7 +75,7 @@ export class AppointmentController {
       const limit = parseInt(req.query.limit) || 20;
       const skip = (page - 1) * limit;
 
-      const appointments = await getUserAppointmentsUseCase.execute(userId);
+      const appointments = await this.getUserAppointmentsUseCase.execute(userId);
       const total = appointments.length;
       const paginated = appointments.slice(skip, skip + limit);
 

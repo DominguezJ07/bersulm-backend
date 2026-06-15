@@ -1,17 +1,17 @@
-import { GetRewardsUseCase } from '../application/GetRewardsUseCase.js';
-import { CreateRewardUseCase } from '../application/CreateRewardUseCase.js';
+import { useCases, repos } from '../../../shared/infrastructure/container.js';
 import { RewardNotFound } from '../domain/RewardErrors.js';
-import { MongoRewardRepository } from './MongoRewardRepository.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 
-const rewardRepository = new MongoRewardRepository();
-const getRewardsUseCase = new GetRewardsUseCase(rewardRepository);
-const createRewardUseCase = new CreateRewardUseCase(rewardRepository);
-
 export class RewardController {
+  constructor() {
+    this.getRewardsUseCase = useCases.rewards.getAll();
+    this.createRewardUseCase = useCases.rewards.create();
+    this.rewardRepository = repos.reward();
+  }
+
   async getAll(req, res) {
     try {
-      const rewards = await getRewardsUseCase.execute();
+      const rewards = await this.getRewardsUseCase.execute();
       const { statusCode, body } = ApiResponse.success(rewards);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -29,7 +29,7 @@ export class RewardController {
         return res.status(400).json({ success: false, message: 'name, description, icon and type are required' });
       }
 
-      const reward = await createRewardUseCase.execute(user, { name, description, icon, type, isActive });
+      const reward = await this.createRewardUseCase.execute(user, { name, description, icon, type, isActive });
 
       const { statusCode, body } = ApiResponse.created(reward);
       res.status(statusCode).json(body);
@@ -49,7 +49,7 @@ export class RewardController {
         return res.status(403).json({ success: false, message: 'Admin privileges required' });
       }
 
-      const existingReward = await rewardRepository.findById(id);
+      const existingReward = await this.rewardRepository.findById(id);
       if (!existingReward) {
         throw new RewardNotFound();
       }
@@ -60,7 +60,7 @@ export class RewardController {
       existingReward.type = type ?? existingReward.type;
       existingReward.isActive = isActive ?? existingReward.isActive;
 
-      const updated = await rewardRepository.update(existingReward);
+      const updated = await this.rewardRepository.update(existingReward);
       const { statusCode, body } = ApiResponse.success(updated);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -78,12 +78,12 @@ export class RewardController {
         return res.status(403).json({ success: false, message: 'Admin privileges required' });
       }
 
-      const reward = await rewardRepository.findById(id);
+      const reward = await this.rewardRepository.findById(id);
       if (!reward) {
         throw new RewardNotFound();
       }
 
-      await rewardRepository.delete(id);
+      await this.rewardRepository.delete(id);
       res.status(204).send();
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
