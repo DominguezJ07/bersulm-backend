@@ -11,9 +11,9 @@ import {
 const router = Router();
 const controller = new RewardController();
 
-router.get('/', controller.getAll);
-router.post('/', authMiddleware, adminMiddleware, validateCreateReward, controller.create);
-router.put('/:id', authMiddleware, adminMiddleware, validateUpdateReward, controller.update);
-router.delete('/:id', authMiddleware, adminMiddleware, validateDeleteReward, controller.delete);
+router.get('/', (req, res) => controller.getAll(req, res));
+router.post('/', authMiddleware, adminMiddleware, validateCreateReward, (req, res) => controller.create(req, res));
+router.put('/:id', authMiddleware, adminMiddleware, validateUpdateReward, (req, res) => controller.update(req, res));
+router.delete('/:id', authMiddleware, adminMiddleware, validateDeleteReward, (req, res) => controller.delete(req, res));
 
 export default router;

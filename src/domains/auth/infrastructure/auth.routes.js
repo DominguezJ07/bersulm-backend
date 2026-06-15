@@ -13,10 +13,16 @@ import { adminMiddleware } from '../../../shared/middlewares/admin.middleware.js
 const router = Router();
 const authController = new AuthController();
 
-router.post('/register', validateRegister, authController.register);
-router.post('/login', validateLogin, authController.login);
-router.post('/refresh-token', validateRefreshToken, authController.refreshToken);
-router.post('/fcm-token', authMiddleware, validateFcmToken, authController.registerFcmToken);
-router.get('/users/search', authMiddleware, adminMiddleware, validateSearchUsers, authController.searchUsers);
+router.post('/register', validateRegister, (req, res) => authController.register(req, res));
+
+router.post('/login', validateLogin, (req, res) => authController.login(req, res));
+
+router.post('/refresh-token', validateRefreshToken, (req, res) => authController.refreshToken(req, res));
+
+router.post('/fcm-token', authMiddleware, validateFcmToken, (req, res) => authController.registerFcmToken(req, res));
+
+router.get('/users/search', authMiddleware, adminMiddleware, validateSearchUsers, (req, res) =>
+  authController.searchUsers(req, res)
+);
 
 export default router;

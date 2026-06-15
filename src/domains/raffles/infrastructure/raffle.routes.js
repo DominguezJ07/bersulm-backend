@@ -17,20 +17,24 @@ import env from '../../../config/env.js';
 const router = Router();
 const controller = new RaffleController();
 
-router.get('/current', optionalAuthMiddleware, controller.getCurrent);
-router.get('/votes', authMiddleware, controller.getVotes);
-router.post('/vote', authMiddleware, validateVote, controller.vote);
-router.post('/spin', authMiddleware, adminMiddleware, validateSpinRaffle, controller.spin);
-router.post('/create-monthly', authMiddleware, adminMiddleware, validateCreateRaffle, controller.createMonthly);
-router.post('/participants', authMiddleware, adminMiddleware, validateAddManualParticipant, controller.addParticipant);
+router.get('/current', optionalAuthMiddleware, (req, res) => controller.getCurrent(req, res));
+router.get('/votes', authMiddleware, (req, res) => controller.getVotes(req, res));
+router.post('/vote', authMiddleware, validateVote, (req, res) => controller.vote(req, res));
+router.post('/spin', authMiddleware, adminMiddleware, validateSpinRaffle, (req, res) => controller.spin(req, res));
+router.post('/create-monthly', authMiddleware, adminMiddleware, validateCreateRaffle, (req, res) =>
+  controller.createMonthly(req, res)
+);
+router.post('/participants', authMiddleware, adminMiddleware, validateAddManualParticipant, (req, res) =>
+  controller.addParticipant(req, res)
+);
 router.delete(
   '/participants/:raffleId/:participantId',
   authMiddleware,
   adminMiddleware,
   validateRemoveManualParticipant,
-  controller.removeParticipant
+  (req, res) => controller.removeParticipant(req, res)
 );
-router.get('/participants/:raffleId', authMiddleware, controller.getParticipants);
+router.get('/participants/:raffleId', authMiddleware, (req, res) => controller.getParticipants(req, res));
 
 if (env.NODE_ENV !== 'production') {
   router.post('/test-month-end', authMiddleware, adminMiddleware, async (req, res) => {

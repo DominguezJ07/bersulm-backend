@@ -7,8 +7,10 @@ import { validateCreateGalleryItem, validateDeleteGalleryItem } from '../../../s
 const router = Router();
 const controller = new GalleryController();
 
-router.get('/', controller.getAll);
-router.post('/', authMiddleware, adminMiddleware, validateCreateGalleryItem, controller.create);
-router.delete('/:id', authMiddleware, adminMiddleware, validateDeleteGalleryItem, controller.delete);
+router.get('/', (req, res) => controller.getAll(req, res));
+router.post('/', authMiddleware, adminMiddleware, validateCreateGalleryItem, (req, res) => controller.create(req, res));
+router.delete('/:id', authMiddleware, adminMiddleware, validateDeleteGalleryItem, (req, res) =>
+  controller.delete(req, res)
+);
 
 export default router;
