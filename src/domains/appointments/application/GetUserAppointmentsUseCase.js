@@ -8,8 +8,11 @@ export class GetUserAppointmentsUseCase {
 
   /**
    * @param {string} userId
+   * @param {{ page?: number, limit?: number }} [options]
+   * @returns {Promise<{ appointments: import('../domain/Appointment.entity').Appointment[], total: number }>}
    */
-  async execute(userId) {
-    return await this.appointmentRepository.findByUserId(userId);
+  async execute(userId, { page = 1, limit = 20 } = {}) {
+    const skip = (page - 1) * limit;
+    return this.appointmentRepository.findByUserId(userId, { skip, limit });
   }
 }

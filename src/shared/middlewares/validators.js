@@ -142,3 +142,13 @@ export const validateRemoveManualParticipant = [
   param('participantId').notEmpty().withMessage('Participant ID is required'),
   handleValidationErrors
 ];
+
+export const validateUpdateAppointmentStatus = [
+  param('id').notEmpty().withMessage('Appointment ID is required'),
+  body('status')
+    .notEmpty()
+    .withMessage('Status is required')
+    .isIn(['confirmed', 'completed'])
+    .withMessage('Status must be confirmed or completed'),
+  handleValidationErrors
+];

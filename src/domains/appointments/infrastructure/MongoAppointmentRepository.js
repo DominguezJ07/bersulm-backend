@@ -8,9 +8,15 @@ export class MongoAppointmentRepository extends IAppointmentRepository {
     return doc ? this._mapToEntity(doc) : null;
   }
 
-  async findByUserId(userId) {
-    const docs = await AppointmentModel.find({ userId }).sort({ date: -1, time: -1 }).lean();
-    return docs.map((doc) => this._mapToEntity(doc));
+  async findByUserId(userId, { skip = 0, limit = 20 } = {}) {
+    const [docs, total] = await Promise.all([
+      AppointmentModel.find({ userId }).sort({ date: -1, time: -1 }).skip(skip).limit(limit).lean(),
+      AppointmentModel.countDocuments({ userId })
+    ]);
+    return {
+      appointments: docs.map((doc) => this._mapToEntity(doc)),
+      total
+    };
   }
 
   async findByDate(date) {
@@ -72,6 +78,41 @@ export class MongoAppointmentRepository extends IAppointmentRepository {
       date: { $regex: `^${month}-` }
     });
     return docs.map((id) => id.toString());
+  }
+
+  async countAll() {
+    return AppointmentModel.countDocuments();
+  }
+
+  async countByMonth(month) {
+    return AppointmentModel.countDocuments({
+      date: { $regex: `^${month}` }
+    });
+  }
+
+  async countByStatus() {
+    const result = await AppointmentModel.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
+    return result.reduce(
+      (acc, item) => {
+        acc[item._id] = item.count;
+        return acc;
+      },
+      { pending: 0, confirmed: 0, completed: 0, cancelled: 0 }
+    );
+  }
+
+  async findAll({ skip = 0, limit = 10, status = null } = {}) {
+    const filter = status ? { status } : {};
+    const [docs, total] = await Promise.all([
+      AppointmentModel.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('userId', 'name email')
+        .lean(),
+      AppointmentModel.countDocuments(filter)
+    ]);
+    return { appointments: docs, total };
   }
 
   _mapToEntity(doc) {

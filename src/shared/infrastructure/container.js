@@ -14,6 +14,9 @@ import { CreateAppointmentUseCase } from '../../domains/appointments/application
 import { GetAvailableSlotsUseCase } from '../../domains/appointments/application/GetAvailableSlotsUseCase.js';
 import { CancelAppointmentUseCase } from '../../domains/appointments/application/CancelAppointmentUseCase.js';
 import { GetUserAppointmentsUseCase } from '../../domains/appointments/application/GetUserAppointmentsUseCase.js';
+import { GetAppointmentStatsUseCase } from '../../domains/appointments/application/GetAppointmentStatsUseCase.js';
+import { GetAllAppointmentsUseCase } from '../../domains/appointments/application/GetAllAppointmentsUseCase.js';
+import { UpdateAppointmentStatusUseCase } from '../../domains/appointments/application/UpdateAppointmentStatusUseCase.js';
 
 import { CreateServiceUseCase } from '../../domains/services/application/CreateServiceUseCase.js';
 import { GetServicesUseCase } from '../../domains/services/application/GetServicesUseCase.js';
@@ -76,7 +79,10 @@ export const useCases = {
     getSlots: () => singleton('getSlotsUC', () => new GetAvailableSlotsUseCase(repos.appointment())),
     cancel: () =>
       singleton('cancelApptUC', () => new CancelAppointmentUseCase(repos.appointment(), useCases.loyalty.addVisit())),
-    getUserAppointments: () => singleton('getUserApptUC', () => new GetUserAppointmentsUseCase(repos.appointment()))
+    getUserAppointments: () => singleton('getUserApptUC', () => new GetUserAppointmentsUseCase(repos.appointment())),
+    getStats: () => singleton('getStatsUC', () => new GetAppointmentStatsUseCase(repos.appointment())),
+    getAll: () => singleton('getAllApptUC', () => new GetAllAppointmentsUseCase(repos.appointment())),
+    updateStatus: () => singleton('updateApptStatusUC', () => new UpdateAppointmentStatusUseCase(repos.appointment()))
   },
   services: {
     create: () => singleton('createSvcUC', () => new CreateServiceUseCase(repos.service())),

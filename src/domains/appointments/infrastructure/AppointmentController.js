@@ -11,6 +11,9 @@ export class AppointmentController {
     this.getAvailableSlotsUseCase = useCases.appointments.getSlots();
     this.cancelAppointmentUseCase = useCases.appointments.cancel();
     this.getUserAppointmentsUseCase = useCases.appointments.getUserAppointments();
+    this.getAppointmentStatsUseCase = useCases.appointments.getStats();
+    this.getAllAppointmentsUseCase = useCases.appointments.getAll();
+    this.updateAppointmentStatusUseCase = useCases.appointments.updateStatus();
   }
 
   async create(req, res) {
@@ -73,16 +76,71 @@ export class AppointmentController {
       const userId = req.user.id;
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 20;
-      const skip = (page - 1) * limit;
 
-      const appointments = await this.getUserAppointmentsUseCase.execute(userId);
-      const total = appointments.length;
-      const paginated = appointments.slice(skip, skip + limit);
+      const { appointments, total } = await this.getUserAppointmentsUseCase.execute(userId, { page, limit });
 
-      const { statusCode, body } = ApiResponse.paginated(paginated, page, limit, total);
+      const { statusCode, body } = ApiResponse.paginated(appointments, page, limit, total);
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async getStats(req, res) {
+    try {
+      const stats = await this.getAppointmentStatsUseCase.execute();
+      const { statusCode, body } = ApiResponse.success(stats);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async getAllAppointments(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const status = req.query.status || null;
+
+      const { appointments, total } = await this.getAllAppointmentsUseCase.execute({
+        page,
+        limit,
+        status
+      });
+
+      const { statusCode, body } = ApiResponse.paginated(appointments, page, limit, total);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async updateStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const adminUser = req.user;
+
+      if (!status) {
+        return res.status(400).json({
+          success: false,
+          message: 'El campo status es requerido'
+        });
+      }
+
+      const appointment = await this.updateAppointmentStatusUseCase.execute({
+        appointmentId: id,
+        newStatus: status,
+        adminUser
+      });
+
+      const { statusCode, body } = ApiResponse.success(appointment);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
       res.status(statusCode).json(body);
     }
   }
