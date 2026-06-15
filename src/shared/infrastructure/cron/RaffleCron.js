@@ -1,14 +1,25 @@
 import cron from 'node-cron';
 import pino from 'pino';
-import { RaffleModel } from '../../../domains/raffles/infrastructure/RaffleModel.js';
-import { RewardVoteModel } from '../../../domains/raffles/infrastructure/RewardVoteModel.js';
-import { AppointmentModel } from '../../../domains/appointments/infrastructure/AppointmentModel.js';
-import { RewardModel } from '../../../domains/rewards/infrastructure/RewardModel.js';
-import { UserModel } from '../../../domains/auth/infrastructure/UserModel.js';
+import { MongoRaffleRepository } from '../../../domains/raffles/infrastructure/MongoRaffleRepository.js';
+import { MongoRewardRepository } from '../../../domains/rewards/infrastructure/MongoRewardRepository.js';
+import { MongoAppointmentRepository } from '../../../domains/appointments/infrastructure/MongoAppointmentRepository.js';
+import { MongoUserRepository } from '../../../domains/auth/infrastructure/MongoUserRepository.js';
+import { CloseMonthlyVotingUseCase } from '../../application/CloseMonthlyVotingUseCase.js';
 import { notifyVotingEnded, notifyRaffleUpdate } from '../socket/SocketManager.js';
 import FirebaseService from '../firebase/FirebaseService.js';
 
 const logger = pino({ name: 'raffle-cron' });
+
+const raffleRepository = new MongoRaffleRepository();
+const rewardRepository = new MongoRewardRepository();
+const appointmentRepository = new MongoAppointmentRepository();
+const userRepository = new MongoUserRepository();
+const closeMonthlyVotingUseCase = new CloseMonthlyVotingUseCase(
+  raffleRepository,
+  rewardRepository,
+  appointmentRepository,
+  userRepository
+);
 
 const isLastDayOfMonth = (date) => {
   const tomorrow = new Date(date);
@@ -34,82 +45,36 @@ export const initRaffleCrons = () => {
     logger.info('Ejecutando último día del mes: %s', now.toISOString());
 
     try {
-      const month = getMonthString(now);
-      const raffle = await RaffleModel.findOne({ month, status: 'voting' });
+      const result = await closeMonthlyVotingUseCase.execute();
 
-      if (!raffle) {
-        logger.info('No hay sorteo en voting para el mes %s', month);
+      if (!result) {
+        logger.info('No hay sorteo en voting para procesar');
         return;
       }
 
-      const winnerVote = await RewardVoteModel.aggregate([
-        { $match: { raffleId: raffle._id } },
-        { $group: { _id: '$rewardId', count: { $sum: 1 } } },
-        { $sort: { count: -1 } },
-        { $limit: 1 }
-      ]);
-
-      const winnerReward = winnerVote.length > 0 ? winnerVote[0]._id.toString() : null;
-
-      let winnerRewardName = 'Sin premio';
-      if (winnerReward) {
-        try {
-          const reward = await RewardModel.findById(winnerReward).select('name').lean();
-          if (reward) winnerRewardName = reward.name;
-        } catch (err) {
-          logger.warn(err, 'Could not fetch reward name for notification');
-        }
-      }
-
-      const participants = await AppointmentModel.distinct('userId', {
-        status: 'completed',
-        date: { $regex: `^${month}-` }
-      });
-
-      const updatedRaffle = await RaffleModel.findByIdAndUpdate(
-        raffle._id,
-        {
-          status: 'active',
-          winnerReward,
-          participants
-        },
-        { new: true }
-      ).lean();
-
-      logger.info(
-        { month, winnerReward, winnerRewardName, participantsCount: participants.length },
-        'Sorteo actualizado'
-      );
-
       notifyVotingEnded({
-        raffleId: raffle._id.toString(),
-        month,
-        winnerReward,
-        winnerRewardName,
+        raffleId: result.raffleId,
+        month: result.month,
+        winnerReward: result.winnerReward,
+        winnerRewardName: result.winnerRewardName,
         status: 'active'
       });
 
-      notifyRaffleUpdate(updatedRaffle);
+      notifyRaffleUpdate(result.updatedRaffle);
 
-      const users = await UserModel.find({
-        fcmTokens: { $exists: true, $not: { $size: 0 } }
-      })
-        .select('fcmTokens')
-        .lean();
-
-      const allTokens = users.flatMap((u) => u.fcmTokens).filter(Boolean);
-
-      if (allTokens.length > 0) {
-        FirebaseService.sendMulticast(allTokens, {
+      if (result.allFcmTokens.length > 0) {
+        FirebaseService.sendMulticast(result.allFcmTokens, {
           title: 'Votaciones cerradas',
-          body: `El premio ganador del sorteo mensual es: ${winnerRewardName}`,
+          body: `El premio ganador del sorteo mensual es: ${result.winnerRewardName}`,
           data: {
             type: 'raffle_voting_ended',
-            raffleId: raffle._id.toString(),
-            month
+            raffleId: result.raffleId,
+            month: result.month
           }
         }).catch((err) => logger.error(err, 'Error sending push notifications'));
       }
+
+      logger.info(result, 'Sorteo cerrado y actualizado');
     } catch (error) {
       logger.error(error, 'Error en cron último día del mes');
     }
@@ -121,7 +86,7 @@ export const initRaffleCrons = () => {
 
     try {
       const month = getMonthString(now);
-      const existing = await RaffleModel.findOne({ month });
+      const existing = await raffleRepository.findByMonth(month);
 
       if (existing) {
         logger.info('Ya existe el sorteo del mes: %s', month);
@@ -129,7 +94,7 @@ export const initRaffleCrons = () => {
       }
 
       const raffleDate = getLastDayOfMonthDate(now);
-      await RaffleModel.create({
+      await raffleRepository.create({
         month,
         status: 'voting',
         raffleDate,

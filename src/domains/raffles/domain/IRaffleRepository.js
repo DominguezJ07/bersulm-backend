@@ -116,4 +116,13 @@ export class IRaffleRepository {
   async create(raffleData) {
     throw new Error('Not implemented');
   }
+
+  /**
+   * @param {string} id
+   * @param {object} data
+   * @returns {Promise<Object>}
+   */
+  async updateById(id, data) {
+    throw new Error('Not implemented');
+  }
 }

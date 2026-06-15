@@ -66,6 +66,14 @@ export class MongoAppointmentRepository extends IAppointmentRepository {
     return cancelled ? this._mapToEntity(cancelled) : null;
   }
 
+  async findCompletedUsersByMonth(month) {
+    const docs = await AppointmentModel.distinct('userId', {
+      status: 'completed',
+      date: { $regex: `^${month}-` }
+    });
+    return docs.map((id) => id.toString());
+  }
+
   _mapToEntity(doc) {
     return new Appointment({
       _id: doc._id.toString(),

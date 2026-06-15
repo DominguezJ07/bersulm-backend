@@ -51,4 +51,11 @@ export class IUserRepository {
   async addFcmToken(userId, fcmToken) {
     throw new Error('Method not implemented');
   }
+
+  /**
+   * @returns {Promise<Array<{ fcmTokens: string[] }>>}
+   */
+  async findAllWithFcmTokens() {
+    throw new Error('Method not implemented');
+  }
 }

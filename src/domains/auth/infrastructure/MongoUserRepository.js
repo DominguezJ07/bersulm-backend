@@ -75,6 +75,15 @@ export class MongoUserRepository extends IUserRepository {
     return doc ? this._mapToEntity(doc) : null;
   }
 
+  async findAllWithFcmTokens() {
+    const docs = await UserModel.find({
+      fcmTokens: { $exists: true, $not: { $size: 0 } }
+    })
+      .select('fcmTokens')
+      .lean();
+    return docs;
+  }
+
   _mapToEntity(doc) {
     return new User({
       _id: doc._id.toString(),

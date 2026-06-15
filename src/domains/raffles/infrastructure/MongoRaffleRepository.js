@@ -191,4 +191,9 @@ export class MongoRaffleRepository extends IRaffleRepository {
     const saved = await doc.save();
     return saved.toObject();
   }
+
+  async updateById(id, data) {
+    const updated = await RaffleModel.findByIdAndUpdate(id, data, { new: true }).lean();
+    return updated;
+  }
 }

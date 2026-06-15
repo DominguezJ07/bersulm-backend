@@ -58,4 +58,12 @@ export class IAppointmentRepository {
   async cancel(id, reason) {
     throw new Error('Not implemented');
   }
+
+  /**
+   * @param {string} month - formato 'YYYY-MM'
+   * @returns {Promise<string[]>}
+   */
+  async findCompletedUsersByMonth(month) {
+    throw new Error('Not implemented');
+  }
 }
