@@ -12,14 +12,17 @@ const router = Router();
 const serviceController = new ServiceController();
 
 router.get('/', (req, res) => serviceController.getAll(req, res));
+
 router.get('/:id', (req, res) => serviceController.getById(req, res));
 
 router.post('/', authMiddleware, adminMiddleware, validateCreateService, (req, res) =>
   serviceController.create(req, res)
 );
+
 router.put('/:id', authMiddleware, adminMiddleware, validateUpdateService, (req, res) =>
   serviceController.update(req, res)
 );
+
 router.delete('/:id', authMiddleware, adminMiddleware, validateDeleteService, (req, res) =>
   serviceController.delete(req, res)
 );
