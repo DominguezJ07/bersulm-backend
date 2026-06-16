@@ -74,3 +74,42 @@ export const notifyLoyaltyUpdate = (card) => {
     io.to(`user:${card.userId}`).emit('loyalty:updated', card);
   }
 };
+
+export const notifyAppointmentConfirmed = (appointment) => {
+  if (!io) return;
+  const userId = appointment.userId?._id?.toString() || appointment.userId?.toString() || appointment.userId;
+  if (!userId) return;
+  io.to(`user:${userId}`).emit('appointment:confirmed', {
+    appointmentId: appointment._id?.toString(),
+    date: appointment.date,
+    time: appointment.time,
+    serviceName: appointment.serviceId?.name || 'tu servicio',
+    status: 'confirmed'
+  });
+};
+
+export const notifyAppointmentCompleted = (appointment) => {
+  if (!io) return;
+  const userId = appointment.userId?._id?.toString() || appointment.userId?.toString() || appointment.userId;
+  if (!userId) return;
+  io.to(`user:${userId}`).emit('appointment:completed', {
+    appointmentId: appointment._id?.toString(),
+    date: appointment.date,
+    time: appointment.time,
+    serviceName: appointment.serviceId?.name || 'tu servicio',
+    status: 'completed'
+  });
+};
+
+export const notifyAppointmentCancelledByAdmin = (appointment) => {
+  if (!io) return;
+  const userId = appointment.userId?._id?.toString() || appointment.userId?.toString() || appointment.userId;
+  if (!userId) return;
+  io.to(`user:${userId}`).emit('appointment:cancelled-by-admin', {
+    appointmentId: appointment._id?.toString(),
+    date: appointment.date,
+    time: appointment.time,
+    serviceName: appointment.serviceId?.name || 'tu servicio',
+    status: 'cancelled'
+  });
+};

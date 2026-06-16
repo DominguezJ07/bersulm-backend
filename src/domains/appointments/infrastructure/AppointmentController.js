@@ -1,10 +1,29 @@
 import { useCases } from '../../../shared/infrastructure/container.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 import { AppointmentModel } from './AppointmentModel.js';
+import { UserModel } from '../../auth/infrastructure/UserModel.js';
 import {
   notifyNewAppointment,
-  notifyCancelledAppointment
+  notifyCancelledAppointment,
+  notifyAppointmentConfirmed,
+  notifyAppointmentCompleted,
+  notifyAppointmentCancelledByAdmin
 } from '../../../shared/infrastructure/socket/SocketManager.js';
+import FirebaseService from '../../../shared/infrastructure/firebase/FirebaseService.js';
+
+async function sendPushToAppointmentOwner(appointment, notification) {
+  try {
+    const userId = appointment.userId?._id?.toString() || appointment.userId?.toString() || appointment.userId;
+    if (!userId) return;
+
+    const user = await UserModel.findById(userId).select('fcmTokens').lean();
+    if (!user || !user.fcmTokens || user.fcmTokens.length === 0) return;
+
+    await FirebaseService.sendMulticast(user.fcmTokens, notification);
+  } catch (err) {
+    console.warn('Push notification failed:', err.message);
+  }
+}
 
 export class AppointmentController {
   constructor() {
@@ -165,6 +184,30 @@ export class AppointmentController {
         .populate('serviceId', 'name price durationMin')
         .lean();
 
+      if (status === 'confirmed') {
+        notifyAppointmentConfirmed(updated);
+        await sendPushToAppointmentOwner(updated, {
+          title: 'Cita confirmada',
+          body: `Tu cita del ${updated.date} a las ${updated.time} ha sido confirmada.`,
+          data: {
+            type: 'appointment_confirmed',
+            appointmentId: updated._id.toString(),
+            date: updated.date,
+            time: updated.time
+          }
+        });
+      } else if (status === 'completed') {
+        notifyAppointmentCompleted(updated);
+        await sendPushToAppointmentOwner(updated, {
+          title: 'Cita completada',
+          body: 'Gracias por visitarnos. Esperamos verte pronto!',
+          data: {
+            type: 'appointment_completed',
+            appointmentId: updated._id.toString()
+          }
+        });
+      }
+
       const { statusCode, body } = ApiResponse.success(updated);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -205,6 +248,18 @@ export class AppointmentController {
         .populate('userId', 'name email phone')
         .populate('serviceId', 'name price durationMin')
         .lean();
+
+      notifyAppointmentCancelledByAdmin(updated);
+      await sendPushToAppointmentOwner(updated, {
+        title: 'Cita cancelada',
+        body: `Tu cita del ${updated.date} a las ${updated.time} ha sido cancelada.`,
+        data: {
+          type: 'appointment_cancelled_by_admin',
+          appointmentId: updated._id.toString(),
+          date: updated.date,
+          time: updated.time
+        }
+      });
 
       const { statusCode, body } = ApiResponse.success(updated);
       res.status(statusCode).json(body);
