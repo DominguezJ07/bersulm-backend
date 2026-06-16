@@ -14,6 +14,7 @@ import galleryRoutes from './domains/gallery/infrastructure/gallery.routes.js';
 import rewardRoutes from './domains/rewards/infrastructure/reward.routes.js';
 import raffleRoutes from './domains/raffles/infrastructure/raffle.routes.js';
 import loyaltyRoutes from './domains/loyalty/infrastructure/loyalty.routes.js';
+import reviewRoutes from './domains/reviews/infrastructure/review.routes.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger.js';
 
@@ -93,6 +94,7 @@ app.use('/api/v1/gallery', galleryRoutes);
 app.use('/api/v1/rewards', rewardRoutes);
 app.use('/api/v1/raffles', raffleRoutes);
 app.use('/api/v1/loyalty', loyaltyRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
 
 app.get('/api/v1/health', async (req, res) => {
   const dbState = mongoose.connection.readyState;
