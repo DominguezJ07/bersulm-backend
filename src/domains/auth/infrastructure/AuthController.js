@@ -129,6 +129,7 @@ export class AuthController {
       const { statusCode, body } = ApiResponse.success(user);
       res.status(statusCode).json(body);
     } catch (error) {
+      console.error('updateProfile error:', error);
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
       res.status(statusCode).json(body);
     }
@@ -146,7 +147,8 @@ export class AuthController {
       const { statusCode, body } = ApiResponse.success(result);
       res.status(statusCode).json(body);
     } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 401);
+      console.error('changePassword error:', error);
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
       res.status(statusCode).json(body);
     }
   }
@@ -160,16 +162,15 @@ export class AuthController {
           message: 'No se recibió ninguna imagen'
         });
       }
-
       const user = await updateAvatarUseCase.execute({
         userId,
         buffer: req.file.buffer,
         mimetype: req.file.mimetype
       });
-
       const { statusCode, body } = ApiResponse.success(user);
       res.status(statusCode).json(body);
     } catch (error) {
+      console.error('updateAvatar error:', error.message);
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
       res.status(statusCode).json(body);
     }

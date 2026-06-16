@@ -19,10 +19,9 @@ export class MongoUserRepository extends IUserRepository {
    * @param {string} id
    * @returns {Promise<User | null>}
    */
-  async findById(id) {
-    const userDoc = await UserModel.findById(id).lean();
-    if (!userDoc) return null;
-    return this._mapToEntity(userDoc);
+  async findById(userId) {
+    const doc = await UserModel.findById(userId).lean();
+    return doc || null;
   }
 
   /**

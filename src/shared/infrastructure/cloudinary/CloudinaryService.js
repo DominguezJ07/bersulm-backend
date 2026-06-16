@@ -28,8 +28,12 @@ export class CloudinaryService {
           ]
         },
         (error, result) => {
-          if (error) reject(error);
-          else resolve(result.secure_url);
+          if (error) {
+            console.error('Cloudinary upload error:', error);
+            reject(error);
+          } else {
+            resolve(result.secure_url);
+          }
         }
       );
       stream.end(buffer);
@@ -47,8 +51,8 @@ export class CloudinaryService {
       const filename = parts[parts.length - 1].split('.')[0];
       const folder = parts[parts.length - 2];
       await cloudinary.uploader.destroy(`${folder}/${filename}`);
-    } catch {
-      // No bloquear si falla la eliminación
+    } catch (err) {
+      console.warn('Cloudinary delete failed:', err.message);
     }
   }
 }
