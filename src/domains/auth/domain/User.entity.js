@@ -23,6 +23,7 @@ export class User {
     this.passwordHash = props.passwordHash;
     this.role = props.role || 'client';
     this.isActive = props.isActive !== undefined ? props.isActive : true;
+    this.avatar = props.avatar || null;
     this.createdAt = props.createdAt || new Date();
     this.updatedAt = props.updatedAt || new Date();
   }
