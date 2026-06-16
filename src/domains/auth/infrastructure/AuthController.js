@@ -2,6 +2,15 @@ import { useCases, repos } from '../../../shared/infrastructure/container.js';
 import BcryptService from '../../../shared/infrastructure/bcrypt/BcryptService.js';
 import JwtService from '../../../shared/infrastructure/jwt/JwtService.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
+import { UpdateProfileUseCase } from '../application/UpdateProfileUseCase.js';
+import { ChangePasswordUseCase } from '../application/ChangePasswordUseCase.js';
+import { UpdateAvatarUseCase } from '../application/UpdateAvatarUseCase.js';
+import CloudinaryService from '../../../shared/infrastructure/cloudinary/CloudinaryService.js';
+
+const userRepository = repos.user();
+const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
+const changePasswordUseCase = new ChangePasswordUseCase(userRepository, BcryptService);
+const updateAvatarUseCase = new UpdateAvatarUseCase(userRepository, CloudinaryService);
 
 export class AuthController {
   constructor() {
@@ -101,6 +110,64 @@ export class AuthController {
       }
 
       const { statusCode, body } = ApiResponse.success({ message: 'FCM token registered' });
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async updateProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const { name, phone } = req.body;
+      const user = await updateProfileUseCase.execute({
+        userId,
+        name,
+        phone
+      });
+      const { statusCode, body } = ApiResponse.success(user);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async changePassword(req, res) {
+    try {
+      const userId = req.user.id;
+      const { currentPassword, newPassword } = req.body;
+      const result = await changePasswordUseCase.execute({
+        userId,
+        currentPassword,
+        newPassword
+      });
+      const { statusCode, body } = ApiResponse.success(result);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 401);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async updateAvatar(req, res) {
+    try {
+      const userId = req.user.id;
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No se recibió ninguna imagen'
+        });
+      }
+
+      const user = await updateAvatarUseCase.execute({
+        userId,
+        buffer: req.file.buffer,
+        mimetype: req.file.mimetype
+      });
+
+      const { statusCode, body } = ApiResponse.success(user);
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);

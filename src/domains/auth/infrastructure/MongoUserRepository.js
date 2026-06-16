@@ -93,8 +93,19 @@ export class MongoUserRepository extends IUserRepository {
       passwordHash: doc.passwordHash,
       role: doc.role,
       isActive: doc.isActive,
+      avatar: doc.avatar,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt
     });
+  }
+
+  async updateProfile(userId, data) {
+    const updated = await UserModel.findByIdAndUpdate(userId, { $set: data }, { new: true }).lean();
+    if (!updated) throw new Error('Usuario no encontrado');
+    return updated;
+  }
+
+  async updatePassword(userId, passwordHash) {
+    await UserModel.findByIdAndUpdate(userId, { $set: { passwordHash } });
   }
 }

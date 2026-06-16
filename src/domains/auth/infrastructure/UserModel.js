@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ['client', 'admin'], default: 'client' },
     isActive: { type: Boolean, default: true },
+    avatar: { type: String, default: null },
     fcmTokens: [{ type: String }]
   },
   {
