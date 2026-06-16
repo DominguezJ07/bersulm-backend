@@ -11,7 +11,7 @@ import {
 } from '../../../shared/infrastructure/socket/SocketManager.js';
 import FirebaseService from '../../../shared/infrastructure/firebase/FirebaseService.js';
 
-async function sendPushToAppointmentOwner(appointment, notification) {
+async function sendPushToOwner(appointment, notification) {
   try {
     const userId = appointment.userId?._id?.toString() || appointment.userId?.toString() || appointment.userId;
     if (!userId) return;
@@ -186,25 +186,17 @@ export class AppointmentController {
 
       if (status === 'confirmed') {
         notifyAppointmentConfirmed(updated);
-        await sendPushToAppointmentOwner(updated, {
-          title: 'Cita confirmada',
+        await sendPushToOwner(updated, {
+          title: '✅ Cita confirmada',
           body: `Tu cita del ${updated.date} a las ${updated.time} ha sido confirmada.`,
-          data: {
-            type: 'appointment_confirmed',
-            appointmentId: updated._id.toString(),
-            date: updated.date,
-            time: updated.time
-          }
+          data: { type: 'appointment_confirmed', appointmentId: updated._id.toString() }
         });
       } else if (status === 'completed') {
         notifyAppointmentCompleted(updated);
-        await sendPushToAppointmentOwner(updated, {
-          title: 'Cita completada',
-          body: 'Gracias por visitarnos. Esperamos verte pronto!',
-          data: {
-            type: 'appointment_completed',
-            appointmentId: updated._id.toString()
-          }
+        await sendPushToOwner(updated, {
+          title: '⭐ Cita completada',
+          body: `¡Gracias por visitarnos! ¿Cómo fue tu experiencia?`,
+          data: { type: 'appointment_completed', appointmentId: updated._id.toString() }
         });
       }
 
@@ -250,14 +242,12 @@ export class AppointmentController {
         .lean();
 
       notifyAppointmentCancelledByAdmin(updated);
-      await sendPushToAppointmentOwner(updated, {
-        title: 'Cita cancelada',
-        body: `Tu cita del ${updated.date} a las ${updated.time} ha sido cancelada.`,
+      await sendPushToOwner(updated, {
+        title: '❌ Cita cancelada',
+        body: `Tu cita del ${updated.date} a las ${updated.time} fue cancelada por el administrador.`,
         data: {
           type: 'appointment_cancelled_by_admin',
-          appointmentId: updated._id.toString(),
-          date: updated.date,
-          time: updated.time
+          appointmentId: updated._id.toString()
         }
       });
 
