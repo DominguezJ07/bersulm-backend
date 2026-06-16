@@ -34,7 +34,8 @@ export class LoginUseCase {
     const token = this.tokenService.generateAccessToken({
       id: user._id.toString(),
       email: user.email,
-      role: user.role
+      role: user.role,
+      name: user.name
     });
 
     const refreshToken = this.tokenService.generateRefreshToken({
