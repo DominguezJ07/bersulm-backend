@@ -13,6 +13,7 @@
     "format": "prettier --write 'src/**/*.js' 'tests/**/*.js'",
     "format:check": "prettier --check 'src/**/*.js' 'tests/**/*.js'",
     "seed": "node src/database/seeders/seed.js",
+    "seed:raffle": "node src/database/seeders/raffle-seed.js",
     "commit": "git add . && git commit --no-edit",
     "push": "git add . && git commit --no-edit && git push origin HEAD",
     "prepare": "husky || true"
