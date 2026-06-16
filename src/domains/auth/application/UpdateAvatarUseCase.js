@@ -1,7 +1,6 @@
 export class UpdateAvatarUseCase {
-  constructor(userRepository, cloudinaryService) {
+  constructor(userRepository) {
     this.userRepository = userRepository;
-    this.cloudinaryService = cloudinaryService;
   }
 
   async execute({ userId, buffer, mimetype }) {
@@ -9,11 +8,17 @@ export class UpdateAvatarUseCase {
       throw new Error('No se recibió ninguna imagen');
     }
 
-    // Subir a Cloudinary en la carpeta avatars
-    const avatarUrl = await this.cloudinaryService.uploadBuffer(buffer, 'bersulm/avatars', `user_${userId}`);
+    // Verificar tamaño máximo — 2MB en Base64
+    if (buffer.length > 2 * 1024 * 1024) {
+      throw new Error('La imagen no puede superar 2MB');
+    }
 
-    // Actualizar el campo avatar del usuario
-    const updated = await this.userRepository.updateProfile(userId, { avatar: avatarUrl });
+    // Convertir buffer a Base64 Data URL
+    const base64 = buffer.toString('base64');
+    const avatarDataUrl = `data:${mimetype};base64,${base64}`;
+
+    // Guardar en MongoDB
+    const updated = await this.userRepository.updateProfile(userId, { avatar: avatarDataUrl });
 
     const { passwordHash, ...userResponse } = updated;
     return userResponse;

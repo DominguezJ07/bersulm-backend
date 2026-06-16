@@ -5,12 +5,11 @@ import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 import { UpdateProfileUseCase } from '../application/UpdateProfileUseCase.js';
 import { ChangePasswordUseCase } from '../application/ChangePasswordUseCase.js';
 import { UpdateAvatarUseCase } from '../application/UpdateAvatarUseCase.js';
-import CloudinaryService from '../../../shared/infrastructure/cloudinary/CloudinaryService.js';
 
 const userRepository = repos.user();
 const updateProfileUseCase = new UpdateProfileUseCase(userRepository);
 const changePasswordUseCase = new ChangePasswordUseCase(userRepository, BcryptService);
-const updateAvatarUseCase = new UpdateAvatarUseCase(userRepository, CloudinaryService);
+const updateAvatarUseCase = new UpdateAvatarUseCase(userRepository);
 
 export class AuthController {
   constructor() {
