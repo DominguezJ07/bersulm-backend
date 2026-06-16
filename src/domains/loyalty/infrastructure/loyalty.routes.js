@@ -8,10 +8,15 @@ const router = Router();
 const controller = new LoyaltyController();
 
 router.get('/', authMiddleware, (req, res) => controller.getCard(req, res));
+
 router.post('/visit', authMiddleware, adminMiddleware, validateAddVisit, (req, res) => controller.addVisit(req, res));
+
 router.post('/spin', (req, res) => controller.spinCard(req, res));
+
 router.get('/minigame', authMiddleware, (req, res) => controller.initMinigame(req, res));
+
 router.post('/minigame/reveal', authMiddleware, validateRevealCard, (req, res) => controller.revealCard(req, res));
+
 router.get('/user/:id', authMiddleware, adminMiddleware, validateIdParam, (req, res) =>
   controller.getUserCard(req, res)
 );
