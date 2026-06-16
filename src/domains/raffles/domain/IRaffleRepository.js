@@ -125,4 +125,13 @@ export class IRaffleRepository {
   async updateById(id, data) {
     throw new Error('Not implemented');
   }
+
+  /**
+   * Find completed raffles with pagination
+   * @param {{ skip?: number, limit?: number }} options
+   * @returns {Promise<{ raffles: Object[], total: number }>}
+   */
+  async findCompleted(options) {
+    throw new Error('Not implemented');
+  }
 }

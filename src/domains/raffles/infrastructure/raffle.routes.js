@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { RaffleController } from './RaffleController.js';
+import { RaffleModel } from './RaffleModel.js';
+import { RewardVoteModel } from './RewardVoteModel.js';
+import { AppointmentModel } from '../../appointments/infrastructure/AppointmentModel.js';
 import { authMiddleware, optionalAuthMiddleware } from '../../../shared/middlewares/auth.middleware.js';
 import { adminMiddleware } from '../../../shared/middlewares/admin.middleware.js';
 import {
@@ -9,15 +12,14 @@ import {
   validateAddManualParticipant,
   validateRemoveManualParticipant
 } from '../../../shared/middlewares/validators.js';
-import { RaffleModel } from './RaffleModel.js';
-import { RewardVoteModel } from './RewardVoteModel.js';
-import { AppointmentModel } from '../../appointments/infrastructure/AppointmentModel.js';
 import env from '../../../config/env.js';
 
 const router = Router();
 const controller = new RaffleController();
 
 router.get('/current', optionalAuthMiddleware, (req, res) => controller.getCurrent(req, res));
+
+router.get('/history', (req, res) => controller.getHistory(req, res));
 
 router.get('/votes', authMiddleware, (req, res) => controller.getVotes(req, res));
 
@@ -55,7 +57,9 @@ if (env.NODE_ENV !== 'production') {
           message: 'No hay sorteo este mes'
         });
       }
-      const votes = await RewardVoteModel.find({ raffleId: raffle._id });
+      const votes = await RewardVoteModel.find({
+        raffleId: raffle._id
+      });
       const voteCounts = {};
       votes.forEach((v) => {
         const id = v.rewardId.toString();
@@ -80,7 +84,10 @@ if (env.NODE_ENV !== 'production') {
         participants: appointments
       });
     } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
     }
   });
 }

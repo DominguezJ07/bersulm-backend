@@ -1,6 +1,11 @@
 import { useCases, repos } from '../../../shared/infrastructure/container.js';
 import { ApiResponse } from '../../../shared/domain/ApiResponse.js';
 import { notifyRaffleWinner } from '../../../shared/infrastructure/socket/SocketManager.js';
+import { GetRaffleHistoryUseCase } from '../application/GetRaffleHistoryUseCase.js';
+
+const raffleRepository = repos.raffle();
+const rewardRepository = repos.reward();
+const getRaffleHistoryUseCase = new GetRaffleHistoryUseCase(raffleRepository, rewardRepository);
 
 export class RaffleController {
   constructor() {
@@ -108,6 +113,24 @@ export class RaffleController {
       const { raffleId } = req.params;
       const participants = await this.raffleRepository.getManualParticipants(raffleId);
       const { statusCode, body } = ApiResponse.success(participants);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async getHistory(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+
+      const result = await getRaffleHistoryUseCase.execute({
+        page,
+        limit
+      });
+
+      const { statusCode, body } = ApiResponse.success(result);
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);

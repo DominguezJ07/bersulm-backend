@@ -196,4 +196,12 @@ export class MongoRaffleRepository extends IRaffleRepository {
     const updated = await RaffleModel.findByIdAndUpdate(id, data, { new: true }).lean();
     return updated;
   }
+
+  async findCompleted({ skip = 0, limit = 10 } = {}) {
+    const [docs, total] = await Promise.all([
+      RaffleModel.find({ status: 'completed' }).sort({ raffleDate: -1 }).skip(skip).limit(limit).lean(),
+      RaffleModel.countDocuments({ status: 'completed' })
+    ]);
+    return { raffles: docs, total };
+  }
 }
