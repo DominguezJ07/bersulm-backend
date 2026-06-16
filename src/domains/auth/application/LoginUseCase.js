@@ -1,23 +1,12 @@
 import { InvalidCredentials } from '../domain/AuthErrors.js';
 
 export class LoginUseCase {
-  /**
-   * @param {import('../domain/IUserRepository').IUserRepository} userRepository
-   * @param {import('../domain/ITokenService').ITokenService} tokenService
-   * @param {import('../../../shared/infrastructure/bcrypt/BcryptService.js').BcryptService} bcryptService
-   */
   constructor(userRepository, tokenService, bcryptService) {
     this.userRepository = userRepository;
     this.tokenService = tokenService;
     this.bcryptService = bcryptService;
   }
 
-  /**
-   * @param {Object} credentials
-   * @param {string} credentials.email
-   * @param {string} credentials.password
-   * @returns {Promise<{ user: import('../domain/User.entity').User, token: string, refreshToken: string }>}
-   */
   async execute({ email, password }) {
     const normalizedEmail = email.toLowerCase().trim();
 
@@ -41,7 +30,8 @@ export class LoginUseCase {
     const refreshToken = this.tokenService.generateRefreshToken({
       id: user._id.toString(),
       email: user.email,
-      role: user.role
+      role: user.role,
+      name: user.name
     });
 
     return { user, token, refreshToken };
