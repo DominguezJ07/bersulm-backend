@@ -23,14 +23,42 @@ export class GalleryController {
   async create(req, res) {
     try {
       const user = req.user;
-      const { imageUrl, title, category, isActive, order } = req.body;
 
-      if (!imageUrl || !title || !category) {
-        return res.status(400).json({ success: false, message: 'imageUrl, title and category are required' });
+      // Soportar tanto imageUrl como imageBase64
+      const { imageUrl, imageBase64, mimeType, title, category, isActive, order } = req.body;
+
+      if (!title || !category) {
+        return res.status(400).json({
+          success: false,
+          message: 'title and category are required'
+        });
+      }
+
+      // Determinar la URL final de la imagen
+      let finalImageUrl = imageUrl;
+
+      // Si viene en Base64, construir el Data URL
+      if (imageBase64 && mimeType) {
+        finalImageUrl = `data:${mimeType};base64,${imageBase64}`;
+      }
+
+      if (!finalImageUrl) {
+        return res.status(400).json({
+          success: false,
+          message: 'imageUrl or imageBase64 is required'
+        });
+      }
+
+      // Validar tamaño máximo — 3MB en Base64
+      if (imageBase64 && imageBase64.length > 4 * 1024 * 1024) {
+        return res.status(400).json({
+          success: false,
+          message: 'La imagen no puede superar 3MB'
+        });
       }
 
       const item = await this.createGalleryItemUseCase.execute(user, {
-        imageUrl,
+        imageUrl: finalImageUrl,
         title,
         category,
         isActive,
