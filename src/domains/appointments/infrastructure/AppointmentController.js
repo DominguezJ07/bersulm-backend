@@ -45,7 +45,43 @@ export class AppointmentController {
 
       const appointment = await this.createAppointmentUseCase.execute({ userId, serviceId, date, time });
 
-      notifyNewAppointment(appointment);
+      // Popular datos para la notificación del admin
+      try {
+        const populated = await AppointmentModel.findById(appointment._id)
+          .populate('userId', 'name email phone')
+          .populate('serviceId', 'name price durationMin')
+          .lean();
+
+        notifyNewAppointment(populated || appointment);
+
+        // Push notification a todos los admins
+        const { UserModel } = await import('../../auth/infrastructure/UserModel.js');
+        const admins = await UserModel.find({
+          role: 'admin',
+          fcmTokens: { $exists: true, $not: { $size: 0 } }
+        })
+          .select('fcmTokens')
+          .lean();
+
+        const adminTokens = admins.flatMap((a) => a.fcmTokens || []);
+        if (adminTokens.length > 0) {
+          const clientName = populated?.userId?.name || 'Un cliente';
+          const serviceName = populated?.serviceId?.name || 'un servicio';
+          FirebaseService.sendMulticast(adminTokens, {
+            title: '📅 Nueva reserva',
+            body: `${clientName} reservó ${serviceName} para el ${appointment.date} a las ${appointment.time}`,
+            data: {
+              type: 'new_appointment',
+              appointmentId: appointment._id.toString(),
+              date: appointment.date,
+              time: appointment.time
+            }
+          }).catch((err) => console.warn('Push admin failed:', err.message));
+        }
+      } catch (err) {
+        console.warn('Notify error:', err.message);
+        notifyNewAppointment(appointment);
+      }
 
       const { statusCode, body } = ApiResponse.created(appointment);
       res.status(statusCode).json(body);
