@@ -67,9 +67,14 @@ export const validateDeleteService = [
 ];
 
 export const validateCreateGalleryItem = [
-  body('imageUrl').trim().notEmpty().withMessage('Image URL is required'),
   body('title').trim().notEmpty().withMessage('Title is required'),
   body('category').trim().notEmpty().withMessage('Category is required'),
+  body().custom((value, { req }) => {
+    if (!req.body.imageUrl && !req.body.imageBase64) {
+      throw new Error('imageUrl or imageBase64 is required');
+    }
+    return true;
+  }),
   handleValidationErrors
 ];
 
