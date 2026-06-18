@@ -23,8 +23,6 @@ export class GalleryController {
   async create(req, res) {
     try {
       const user = req.user;
-
-      // Soportar tanto imageUrl como imageBase64
       const { imageUrl, imageBase64, mimeType, title, category, isActive, order } = req.body;
 
       if (!title || !category) {
@@ -34,10 +32,8 @@ export class GalleryController {
         });
       }
 
-      // Determinar la URL final de la imagen
+      // Aceptar Base64 o URL
       let finalImageUrl = imageUrl;
-
-      // Si viene en Base64, construir el Data URL
       if (imageBase64 && mimeType) {
         finalImageUrl = `data:${mimeType};base64,${imageBase64}`;
       }
@@ -46,14 +42,6 @@ export class GalleryController {
         return res.status(400).json({
           success: false,
           message: 'imageUrl or imageBase64 is required'
-        });
-      }
-
-      // Validar tamaño máximo — 3MB en Base64
-      if (imageBase64 && imageBase64.length > 4 * 1024 * 1024) {
-        return res.status(400).json({
-          success: false,
-          message: 'La imagen no puede superar 3MB'
         });
       }
 
