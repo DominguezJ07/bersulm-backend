@@ -7,6 +7,20 @@ import { IRaffleRepository } from '../domain/IRaffleRepository.js';
 
 export class MongoRaffleRepository extends IRaffleRepository {
   async findCurrent() {
+    const testMode = process.env.TEST_MODE === 'true';
+
+    if (testMode) {
+      // Modo prueba: buscar el sorteo más reciente
+      // en voting o active sin importar el month
+      const doc = await RaffleModel.findOne({
+        status: { $in: ['voting', 'active'] }
+      })
+        .sort({ createdAt: -1 })
+        .lean();
+      return doc ? this._mapToRaffle(doc) : null;
+    }
+
+    // Modo normal: buscar por mes actual
     const now = new Date();
     const month = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     const doc = await RaffleModel.findOne({ month }).lean();
