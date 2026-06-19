@@ -49,5 +49,6 @@ export default {
   FIREBASE_PROJECT_ID,
   FIREBASE_CLIENT_EMAIL,
   FIREBASE_PRIVATE_KEY,
-  NODE_ENV
+  NODE_ENV,
+  TEST_MODE: process.env.TEST_MODE || 'false'
 };
