@@ -25,13 +25,14 @@ export class GetCurrentRaffleUseCase {
     let countdown;
     const testMode = env.TEST_MODE === 'true';
     if (testMode) {
+      // En modo prueba: tiempo hasta próximo múltiplo de 10 min
       const minutes = now.getMinutes();
       const seconds = now.getSeconds();
       const minutesUntilClose = 10 - (minutes % 10);
-      const secondsUntilClose = minutesUntilClose * 60 - seconds;
-      countdown = secondsUntilClose;
+      countdown = minutesUntilClose * 60 - seconds;
     } else {
-      countdown = Math.max(0, raffle.raffleDate.getTime() - now.getTime());
+      // Modo normal: tiempo hasta raffleDate en SEGUNDOS
+      countdown = Math.max(0, Math.floor((raffle.raffleDate.getTime() - now.getTime()) / 1000));
     }
 
     /** @type {Object} */
