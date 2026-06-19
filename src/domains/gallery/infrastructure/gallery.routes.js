@@ -15,4 +15,6 @@ router.delete('/:id', authMiddleware, adminMiddleware, validateDeleteGalleryItem
   controller.delete(req, res)
 );
 
+router.put('/:id', authMiddleware, adminMiddleware, (req, res) => controller.update(req, res));
+
 export default router;

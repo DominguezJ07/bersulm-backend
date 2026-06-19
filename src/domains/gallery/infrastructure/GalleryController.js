@@ -70,4 +70,24 @@ export class GalleryController {
       res.status(statusCode).json(body);
     }
   }
+
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const { title, category } = req.body;
+      const GalleryModel = (await import('./GalleryModel.js')).GalleryModel;
+      const updated = await GalleryModel.findByIdAndUpdate(id, { $set: { title, category } }, { new: true }).lean();
+      if (!updated) {
+        return res.status(404).json({
+          success: false,
+          message: 'Gallery item not found'
+        });
+      }
+      const { statusCode, body } = ApiResponse.success(updated);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
 }
