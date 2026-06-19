@@ -1,20 +1,11 @@
 import { RaffleNotFound } from '../domain/RaffleErrors.js';
-import env from '../../../config/env.js';
 
 export class GetCurrentRaffleUseCase {
-  /**
-   * @param {import('../domain/IRaffleRepository').IRaffleRepository} raffleRepository
-   * @param {import('../../rewards/domain/IRewardRepository').IRewardRepository} rewardRepository
-   */
   constructor(raffleRepository, rewardRepository) {
     this.raffleRepository = raffleRepository;
     this.rewardRepository = rewardRepository;
   }
 
-  /**
-   * @param {string | null} [userId]
-   * @returns {Promise<Object>}
-   */
   async execute(userId = null) {
     const raffle = await this.raffleRepository.findCurrent();
     if (!raffle) {
@@ -22,29 +13,43 @@ export class GetCurrentRaffleUseCase {
     }
 
     const now = new Date();
+
+    // Calcular countdown en SEGUNDOS
     let countdown;
-    const testMode = env.TEST_MODE === 'true';
+    const testMode = process.env.TEST_MODE === 'true';
     if (testMode) {
-      // En modo prueba: tiempo hasta próximo múltiplo de 10 min
       const minutes = now.getMinutes();
       const seconds = now.getSeconds();
       const minutesUntilClose = 10 - (minutes % 10);
       countdown = minutesUntilClose * 60 - seconds;
     } else {
-      // Modo normal: tiempo hasta raffleDate en SEGUNDOS
       countdown = Math.max(0, Math.floor((raffle.raffleDate.getTime() - now.getTime()) / 1000));
     }
 
-    /** @type {Object} */
     const result = {
-      raffle,
+      raffle: {
+        _id: raffle._id,
+        id: raffle._id,
+        month: raffle.month,
+        status: raffle.status,
+        raffleDate: raffle.raffleDate,
+        participants: raffle.participants || [],
+        manualParticipants: raffle.manualParticipants || [],
+        winnerId: raffle.winnerId,
+        winnerReward: raffle.winnerReward
+      },
       countdown,
-      phase: raffle.status
+      phase: raffle.status,
+      userHasVoted: false,
+      votedRewardId: null
     };
 
     if (userId) {
       const userVote = await this.raffleRepository.getUserVote(raffle._id, userId);
       result.userHasVoted = !!userVote;
+      if (userVote) {
+        result.votedRewardId = userVote.rewardId?.toString() || null;
+      }
     }
 
     if (raffle.status === 'voting') {
@@ -64,7 +69,7 @@ export class GetCurrentRaffleUseCase {
             }
           : null;
       }
-      result.participantCount = (raffle.participants || []).length;
+      result.participantCount = (raffle.participants?.length || 0) + (raffle.manualParticipants?.length || 0);
       result.manualParticipants = raffle.manualParticipants || [];
     }
 
