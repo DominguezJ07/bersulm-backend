@@ -11,7 +11,7 @@ router.get('/', authMiddleware, (req, res) => controller.getCard(req, res));
 
 router.post('/visit', authMiddleware, adminMiddleware, validateAddVisit, (req, res) => controller.addVisit(req, res));
 
-router.post('/spin', (req, res) => controller.spinCard(req, res));
+router.post('/spin', authMiddleware, (req, res) => controller.spinCard(req, res));
 
 router.get('/minigame', authMiddleware, (req, res) => controller.initMinigame(req, res));
 

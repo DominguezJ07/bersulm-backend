@@ -43,7 +43,15 @@ export class CreateAppointmentUseCase {
 
     // 3. Create appointment
     const appointment = Appointment.create({ ...data, totalPrice });
-    const saved = await this.appointmentRepository.save(appointment);
+    let saved;
+    try {
+      saved = await this.appointmentRepository.save(appointment);
+    } catch (err) {
+      if (err.code === 11000 || err.message === 'SLOT_ALREADY_TAKEN') {
+        throw new SlotNotAvailable();
+      }
+      throw err;
+    }
 
     // 3. Update loyalty card (async, don't block response if possible or wait if required)
     if (this.loyaltyService && this.loyaltyService.addVisit) {

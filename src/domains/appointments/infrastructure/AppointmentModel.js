@@ -21,7 +21,12 @@ const appointmentSchema = new mongoose.Schema(
   }
 );
 
-// Index for quick search of availability
-appointmentSchema.index({ date: 1, time: 1, status: 1 });
+appointmentSchema.index(
+  { date: 1, time: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ['pending', 'confirmed', 'completed'] } }
+  }
+);
 
 export const AppointmentModel = mongoose.model('Appointment', appointmentSchema);

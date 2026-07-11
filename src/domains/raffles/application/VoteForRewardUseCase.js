@@ -1,12 +1,15 @@
 import { RaffleNotFound, AlreadyVoted, RaffleNotInVotingPhase } from '../domain/RaffleErrors.js';
+import { RewardNotFound } from '../../rewards/domain/RewardErrors.js';
 import { RewardVote } from '../domain/RewardVote.entity.js';
 
 export class VoteForRewardUseCase {
   /**
    * @param {import('../domain/IRaffleRepository').IRaffleRepository} raffleRepository
+   * @param {import('../../rewards/domain/IRewardRepository').IRewardRepository} rewardRepository
    */
-  constructor(raffleRepository) {
+  constructor(raffleRepository, rewardRepository) {
     this.raffleRepository = raffleRepository;
+    this.rewardRepository = rewardRepository;
   }
 
   /**
@@ -30,6 +33,11 @@ export class VoteForRewardUseCase {
 
     if (raffle.status !== 'voting') {
       throw new RaffleNotInVotingPhase();
+    }
+
+    const reward = await this.rewardRepository.findById(rewardId);
+    if (!reward || !reward.isActive) {
+      throw new RewardNotFound();
     }
 
     const existingVote = await this.raffleRepository.getUserVote(raffleId, userId);

@@ -99,7 +99,7 @@ export const useCases = {
   raffles: {
     getCurrent: () =>
       singleton('getCurrentRaffleUC', () => new GetCurrentRaffleUseCase(repos.raffle(), repos.reward())),
-    vote: () => singleton('voteUC', () => new VoteForRewardUseCase(repos.raffle())),
+    vote: () => singleton('voteUC', () => new VoteForRewardUseCase(repos.raffle(), repos.reward())),
     spin: () => singleton('spinRaffleUC', () => new SpinRaffleUseCase(repos.raffle())),
     getVotes: () => singleton('getVotesUC', () => new GetVotesUseCase(repos.raffle())),
     addParticipant: () => singleton('addParticipantUC', () => new AddManualParticipantUseCase(repos.raffle())),

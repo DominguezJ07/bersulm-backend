@@ -39,8 +39,17 @@ export class MongoAppointmentRepository extends IAppointmentRepository {
       notes: appointment.notes,
       totalPrice: appointment.totalPrice
     });
-    const saved = await doc.save();
-    return this._mapToEntity(saved.toObject());
+    try {
+      const saved = await doc.save();
+      return this._mapToEntity(saved.toObject());
+    } catch (err) {
+      if (err.code === 11000) {
+        const error = new Error('SLOT_ALREADY_TAKEN');
+        error.code = 11000;
+        throw error;
+      }
+      throw err;
+    }
   }
 
   async update(appointment) {

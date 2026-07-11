@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { RaffleModel } from './RaffleModel.js';
 import { RewardVoteModel } from './RewardVoteModel.js';
+import { RewardModel } from '../../rewards/infrastructure/RewardModel.js';
 import { Raffle } from '../domain/Raffle.entity.js';
 import { RewardVote } from '../domain/RewardVote.entity.js';
 import { IRaffleRepository } from '../domain/IRaffleRepository.js';
@@ -101,29 +102,22 @@ export class MongoRaffleRepository extends IRaffleRepository {
   }
 
   async getAggregatedVotes(raffleId) {
-    const result = await RewardVoteModel.aggregate([
+    const activeRewards = await RewardModel.find({ isActive: true }).lean();
+
+    const voteCounts = await RewardVoteModel.aggregate([
       { $match: { raffleId: new mongoose.Types.ObjectId(raffleId) } },
-      { $group: { _id: '$rewardId', count: { $sum: 1 } } },
-      {
-        $lookup: {
-          from: 'rewards',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'reward'
-        }
-      },
-      { $unwind: { path: '$reward', preserveNullAndEmptyArrays: true } },
-      {
-        $project: {
-          _id: 0,
-          rewardId: { $toString: '$_id' },
-          name: { $ifNull: ['$reward.name', 'Desconocido'] },
-          icon: { $ifNull: ['$reward.icon', ''] },
-          type: { $ifNull: ['$reward.type', ''] },
-          count: 1
-        }
-      }
+      { $group: { _id: '$rewardId', count: { $sum: 1 } } }
     ]);
+
+    const countMap = new Map(voteCounts.map((v) => [v._id.toString(), v.count]));
+
+    const result = activeRewards.map((reward) => ({
+      rewardId: reward._id.toString(),
+      name: reward.name,
+      icon: reward.icon || '',
+      type: reward.type || '',
+      count: countMap.get(reward._id.toString()) || 0
+    }));
 
     const totalVotes = result.reduce((sum, r) => sum + r.count, 0);
     return result.map((r) => ({
@@ -132,7 +126,7 @@ export class MongoRaffleRepository extends IRaffleRepository {
       icon: r.icon,
       type: r.type,
       count: r.count,
-      percentage: totalVotes > 0 ? Math.round((r.count / totalVotes) * 1000) / 10 : 0
+      percentage: totalVotes > 0 ? Number(((r.count / totalVotes) * 100).toFixed(1)) : 0
     }));
   }
 

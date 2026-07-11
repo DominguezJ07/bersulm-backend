@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { RaffleNotFound } from '../domain/RaffleErrors.js';
 import { ForbiddenError } from '../../../shared/domain/DomainError.js';
 
@@ -34,7 +35,7 @@ export class SpinRaffleUseCase {
       return await this.raffleRepository.update(raffle);
     }
 
-    const randomIndex = Math.floor(Math.random() * manualParticipants.length);
+    const randomIndex = randomInt(manualParticipants.length);
     const winner = manualParticipants[randomIndex];
 
     raffle.winnerId = winner.userId || null;
