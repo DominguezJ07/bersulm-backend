@@ -26,7 +26,7 @@ export class AddManualParticipantUseCase {
       throw new RaffleNotFound();
     }
 
-    if (raffle.status !== 'active') {
+    if (raffle.status === 'completed') {
       throw new RaffleNotInActivePhase();
     }
 

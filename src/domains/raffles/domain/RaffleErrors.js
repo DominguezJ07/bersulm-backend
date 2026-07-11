@@ -20,7 +20,7 @@ export class RaffleNotInVotingPhase extends DomainError {
 
 export class RaffleNotInActivePhase extends DomainError {
   constructor() {
-    super('Manual participants can only be managed in the active phase', 400);
+    super('Manual participants cannot be managed once the raffle is completed', 400);
   }
 }
 
