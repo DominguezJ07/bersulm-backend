@@ -121,19 +121,15 @@ export const initRaffleCrons = () => {
     }
   }, 2000);
 
-  // Crear nuevo sorteo al inicio del mes o cada 10 min en modo prueba
-  const testMode = process.env.TEST_MODE === 'true';
-  if (testMode) {
-    logger.info('Modo prueba — creando sorteo cada 10 minutos');
-    cron.schedule('5-59/10 * * * *', async () => {
-      logger.info('Creando nuevo sorteo (TEST)...');
-      await createNewRaffle();
-    });
-  } else {
-    cron.schedule('1 0 1 * *', async () => {
-      const now = new Date();
-      logger.info('Creando sorteo nuevo mes: %s', now.toISOString());
-      await createNewRaffle();
-    });
-  }
+  cron.schedule('* * * * *', async () => {
+    try {
+      const current = await raffleRepository.findCurrent();
+      if (!current) {
+        logger.info('No hay sorteo en curso — creando uno nuevo');
+        await createNewRaffle();
+      }
+    } catch (error) {
+      logger.error(error, 'Error verificando creación de sorteo');
+    }
+  });
 };
