@@ -120,16 +120,4 @@ export const initRaffleCrons = () => {
       await createNewRaffle();
     }
   }, 2000);
-
-  cron.schedule('* * * * *', async () => {
-    try {
-      const current = await raffleRepository.findCurrent();
-      if (!current) {
-        logger.info('No hay sorteo en curso — creando uno nuevo');
-        await createNewRaffle();
-      }
-    } catch (error) {
-      logger.error(error, 'Error verificando creación de sorteo');
-    }
-  });
 };
