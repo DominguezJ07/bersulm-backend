@@ -13,18 +13,7 @@ export class GetCurrentRaffleUseCase {
     }
 
     const now = new Date();
-
-    // Calcular countdown en SEGUNDOS
-    let countdown;
-    const testMode = process.env.TEST_MODE === 'true';
-    if (testMode) {
-      const minutes = now.getMinutes();
-      const seconds = now.getSeconds();
-      const minutesUntilClose = 10 - (minutes % 10);
-      countdown = minutesUntilClose * 60 - seconds;
-    } else {
-      countdown = Math.max(0, Math.floor((raffle.raffleDate.getTime() - now.getTime()) / 1000));
-    }
+    const countdown = Math.max(0, Math.floor((raffle.raffleDate.getTime() - now.getTime()) / 1000));
 
     const result = {
       raffle: {

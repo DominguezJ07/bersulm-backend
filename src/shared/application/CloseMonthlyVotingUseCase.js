@@ -13,13 +13,20 @@ export class CloseMonthlyVotingUseCase {
   }
 
   /**
+   * @param {Object | null} [raffleOverride]
    * @returns {Promise<Object | null>}
    */
-  async execute() {
+  async execute(raffleOverride = null) {
+    let raffle = raffleOverride;
     const now = new Date();
-    const month = this._getMonthString(now);
+    let month;
 
-    const raffle = await this.raffleRepository.findByMonth(month);
+    if (!raffle) {
+      month = this._getMonthString(now);
+      raffle = await this.raffleRepository.findByMonth(month);
+    } else {
+      month = raffle.month;
+    }
 
     if (!raffle || raffle.status !== 'voting') {
       return null;

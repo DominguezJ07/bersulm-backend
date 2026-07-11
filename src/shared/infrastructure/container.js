@@ -36,6 +36,7 @@ import { AddManualParticipantUseCase } from '../../domains/raffles/application/A
 import { RemoveManualParticipantUseCase } from '../../domains/raffles/application/RemoveManualParticipantUseCase.js';
 import { CreateMonthlyRaffleUseCase } from '../../domains/raffles/application/CreateMonthlyRaffleUseCase.js';
 import { GetVotesByMonthUseCase } from '../../domains/raffles/application/GetVotesByMonthUseCase.js';
+import { UpdateRaffleDeadlineUseCase } from '../../domains/raffles/application/UpdateRaffleDeadlineUseCase.js';
 
 import { CreateRewardUseCase } from '../../domains/rewards/application/CreateRewardUseCase.js';
 import { GetRewardsUseCase } from '../../domains/rewards/application/GetRewardsUseCase.js';
@@ -105,7 +106,8 @@ export const useCases = {
     addParticipant: () => singleton('addParticipantUC', () => new AddManualParticipantUseCase(repos.raffle())),
     removeParticipant: () => singleton('removeParticipantUC', () => new RemoveManualParticipantUseCase(repos.raffle())),
     createMonthly: () => singleton('createMonthlyUC', () => new CreateMonthlyRaffleUseCase(repos.raffle())),
-    getVotesByMonth: () => singleton('getVotesByMonthUC', () => new GetVotesByMonthUseCase(repos.raffle()))
+    getVotesByMonth: () => singleton('getVotesByMonthUC', () => new GetVotesByMonthUseCase(repos.raffle())),
+    updateDeadline: () => singleton('updateDeadlineUC', () => new UpdateRaffleDeadlineUseCase(repos.raffle()))
   },
   rewards: {
     create: () => singleton('createRewardUC', () => new CreateRewardUseCase(repos.reward())),

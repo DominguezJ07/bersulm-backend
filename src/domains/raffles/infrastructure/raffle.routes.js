@@ -45,6 +45,8 @@ router.delete(
 
 router.get('/participants/:raffleId', authMiddleware, (req, res) => controller.getParticipants(req, res));
 
+router.patch('/:raffleId/deadline', authMiddleware, adminMiddleware, (req, res) => controller.updateDeadline(req, res));
+
 if (env.NODE_ENV !== 'production') {
   router.post('/test-month-end', authMiddleware, adminMiddleware, async (req, res) => {
     try {

@@ -16,6 +16,7 @@ export class RaffleController {
     this.createMonthlyRaffleUseCase = useCases.raffles.createMonthly();
     this.addManualParticipantUseCase = useCases.raffles.addParticipant();
     this.removeManualParticipantUseCase = useCases.raffles.removeParticipant();
+    this.updateRaffleDeadlineUseCase = useCases.raffles.updateDeadline();
     this.raffleRepository = repos.raffle();
   }
 
@@ -131,6 +132,19 @@ export class RaffleController {
       });
 
       const { statusCode, body } = ApiResponse.success(result);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async updateDeadline(req, res) {
+    try {
+      const { raffleId } = req.params;
+      const { durationMinutes } = req.body;
+      const raffle = await this.updateRaffleDeadlineUseCase.execute(req.user, raffleId, durationMinutes);
+      const { statusCode, body } = ApiResponse.success(raffle);
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
