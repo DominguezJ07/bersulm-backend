@@ -31,6 +31,7 @@ export class SpinRaffleUseCase {
     if (manualParticipants.length === 0) {
       raffle.status = 'completed';
       raffle.winnerId = null;
+      raffle.winnerName = null;
       raffle.winnerReward = raffle.winnerReward || null;
       return await this.raffleRepository.update(raffle);
     }
@@ -39,6 +40,7 @@ export class SpinRaffleUseCase {
     const winner = manualParticipants[randomIndex];
 
     raffle.winnerId = winner.userId || null;
+    raffle.winnerName = winner.name;
     raffle.status = 'completed';
 
     return await this.raffleRepository.update(raffle);

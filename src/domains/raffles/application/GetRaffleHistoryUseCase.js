@@ -44,6 +44,7 @@ export class GetRaffleHistoryUseCase {
           raffleDate: raffle.raffleDate,
           winnerReward: winnerRewardData,
           winnerId: raffle.winnerId,
+          winnerName: raffle.winnerName || null,
           participantCount: (raffle.participants?.length || 0) + (raffle.manualParticipants?.length || 0),
           createdAt: raffle.createdAt
         };

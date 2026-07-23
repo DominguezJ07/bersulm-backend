@@ -63,6 +63,7 @@ export class GetCurrentRaffleUseCase {
     }
 
     if (raffle.status === 'completed') {
+      result.winnerName = raffle.winnerName || null;
       result.winnerId = raffle.winnerId;
     }
 

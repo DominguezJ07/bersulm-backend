@@ -15,6 +15,7 @@ const raffleSchema = new mongoose.Schema(
     status: { type: String, enum: ['voting', 'scheduled', 'active', 'completed'], default: 'scheduled' },
     raffleDate: { type: Date, required: true },
     winnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    winnerName: { type: String, default: null },
     winnerReward: { type: String },
     participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     manualParticipants: { type: [manualParticipantSchema], default: [] }
