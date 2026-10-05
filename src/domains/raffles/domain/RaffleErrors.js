@@ -1,4 +1,4 @@
-import { DomainError, NotFoundError, ConflictError } from '../../../shared/domain/DomainError.js';
+import { NotFoundError, ConflictError, DomainError } from '../../../shared/domain/DomainError.js';
 
 export class RaffleNotFound extends NotFoundError {
   constructor() {
@@ -6,21 +6,15 @@ export class RaffleNotFound extends NotFoundError {
   }
 }
 
-export class AlreadyVoted extends ConflictError {
+export class RaffleAlreadyActive extends ConflictError {
   constructor() {
-    super('You have already voted in this raffle');
+    super('Ya existe un sorteo activo. Complétalo antes de crear uno nuevo.');
   }
 }
 
-export class RaffleNotInVotingPhase extends DomainError {
+export class RaffleNotInActivePhase extends ConflictError {
   constructor() {
-    super('The raffle is not in voting phase', 400);
-  }
-}
-
-export class RaffleNotInActivePhase extends DomainError {
-  constructor() {
-    super('Manual participants cannot be managed once the raffle is completed', 400);
+    super('Manual participants cannot be managed once the raffle is completed');
   }
 }
 
@@ -33,5 +27,14 @@ export class ParticipantAlreadyExists extends ConflictError {
 export class ParticipantNotFound extends NotFoundError {
   constructor() {
     super('Participant not found in this raffle');
+  }
+}
+
+export class RaffleNotYetFinished extends DomainError {
+  constructor() {
+    super(
+      'El sorteo aún no ha finalizado su tiempo. Espera a que termine la cuenta regresiva para girar la ruleta.',
+      400
+    );
   }
 }

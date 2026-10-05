@@ -10,6 +10,14 @@ const loyaltyCardSchema = new mongoose.Schema(
     rewardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Reward' },
     rewardWon: { type: String },
     claimedAt: { type: Date },
+    claimedRewards: [
+      {
+        rewardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Reward' },
+        rewardName: { type: String },
+        claimedAt: { type: Date },
+        usedAt: { type: Date, default: null }
+      }
+    ],
     minigameCards: [
       {
         position: { type: Number, required: true },

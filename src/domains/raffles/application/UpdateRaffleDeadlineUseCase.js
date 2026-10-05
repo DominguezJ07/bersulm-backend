@@ -1,4 +1,4 @@
-import { RaffleNotFound, RaffleNotInVotingPhase } from '../domain/RaffleErrors.js';
+import { RaffleNotFound, RaffleNotInActivePhase } from '../domain/RaffleErrors.js';
 import { ForbiddenError, ValidationError } from '../../../shared/domain/DomainError.js';
 
 export class UpdateRaffleDeadlineUseCase {
@@ -30,8 +30,8 @@ export class UpdateRaffleDeadlineUseCase {
       throw new RaffleNotFound();
     }
 
-    if (raffle.status !== 'voting') {
-      throw new RaffleNotInVotingPhase();
+    if (raffle.status !== 'active') {
+      throw new RaffleNotInActivePhase();
     }
 
     const newRaffleDate = new Date(Date.now() + durationMinutes * 60 * 1000);

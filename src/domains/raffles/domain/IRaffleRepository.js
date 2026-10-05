@@ -43,40 +43,6 @@ export class IRaffleRepository {
 
   /**
    * @param {string} raffleId
-   * @param {string} userId
-   * @returns {Promise<void>}
-   */
-  async addParticipant(raffleId, userId) {
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * @param {string} raffleId
-   * @returns {Promise<import('./RewardVote.entity').RewardVote[]>}
-   */
-  async getVotesByRaffle(raffleId) {
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * @param {string} raffleId
-   * @param {string} userId
-   * @returns {Promise<import('./RewardVote.entity').RewardVote | null>}
-   */
-  async getUserVote(raffleId, userId) {
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * @param {string} raffleId
-   * @returns {Promise<Array<{ rewardId: string, name: string, icon: string, type: string, count: number, percentage: number }>>}
-   */
-  async getAggregatedVotes(raffleId) {
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * @param {string} raffleId
    * @param {{ name: string, userId?: string }} participant
    * @returns {Promise<import('./Raffle.entity').Raffle>}
    */
@@ -127,11 +93,28 @@ export class IRaffleRepository {
   }
 
   /**
+   * Find all raffles with pagination
+   * @param {{ skip?: number, limit?: number }} options
+   * @returns {Promise<{ raffles: import('./Raffle.entity').Raffle[], total: number }>}
+   */
+  async findAll(options) {
+    throw new Error('Not implemented');
+  }
+
+  /**
    * Find completed raffles with pagination
    * @param {{ skip?: number, limit?: number }} options
    * @returns {Promise<{ raffles: Object[], total: number }>}
    */
   async findCompleted(options) {
+    throw new Error('Not implemented');
+  }
+
+  /**
+   * @param {string} id
+   * @returns {Promise<void>}
+   */
+  async deleteById(id) {
     throw new Error('Not implemented');
   }
 }

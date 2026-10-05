@@ -22,6 +22,17 @@ export class GetLoyaltyCardUseCase {
       card = LoyaltyCard.create({ userId: user.id, visits: 0, totalVisits: 0, status: 'active', currentCycle: 1 });
       card = await this.loyaltyRepository.save(card);
     }
+
+    if (card.rewardWon && !card.claimedRewards.some((r) => r.rewardName === card.rewardWon)) {
+      card.claimedRewards.push({
+        rewardId: card.rewardId,
+        rewardName: card.rewardWon,
+        claimedAt: card.claimedAt || new Date(),
+        usedAt: null
+      });
+      card = await this.loyaltyRepository.update(card);
+    }
+
     return card;
   }
 }

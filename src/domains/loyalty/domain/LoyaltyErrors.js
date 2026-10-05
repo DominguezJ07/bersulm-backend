@@ -29,3 +29,9 @@ export class NoLoyaltyRewardsAvailable extends DomainError {
     super('No loyalty rewards available', 400);
   }
 }
+
+export class RewardNotAvailable extends DomainError {
+  constructor() {
+    super('El premio no existe o ya ha sido usado', 400);
+  }
+}

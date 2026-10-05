@@ -4,16 +4,16 @@ import { notifyRaffleWinner } from '../../../shared/infrastructure/socket/Socket
 import { GetRaffleHistoryUseCase } from '../application/GetRaffleHistoryUseCase.js';
 
 const raffleRepository = repos.raffle();
-const rewardRepository = repos.reward();
-const getRaffleHistoryUseCase = new GetRaffleHistoryUseCase(raffleRepository, rewardRepository);
+const getRaffleHistoryUseCase = new GetRaffleHistoryUseCase(raffleRepository);
 
 export class RaffleController {
   constructor() {
     this.getCurrentRaffleUseCase = useCases.raffles.getCurrent();
-    this.voteForRewardUseCase = useCases.raffles.vote();
+    this.createRafflePrizeUseCase = useCases.raffles.createPrize();
+    this.getAllRafflesUseCase = useCases.raffles.getAll();
+    this.updateRafflePrizeUseCase = useCases.raffles.updatePrize();
+    this.deleteRaffleUseCase = useCases.raffles.delete();
     this.spinRaffleUseCase = useCases.raffles.spin();
-    this.getVotesByMonthUseCase = useCases.raffles.getVotesByMonth();
-    this.createMonthlyRaffleUseCase = useCases.raffles.createMonthly();
     this.addManualParticipantUseCase = useCases.raffles.addParticipant();
     this.removeManualParticipantUseCase = useCases.raffles.removeParticipant();
     this.updateRaffleDeadlineUseCase = useCases.raffles.updateDeadline();
@@ -22,8 +22,7 @@ export class RaffleController {
 
   async getCurrent(req, res) {
     try {
-      const userId = req.user?.id || null;
-      const result = await this.getCurrentRaffleUseCase.execute(userId);
+      const result = await this.getCurrentRaffleUseCase.execute();
       const { statusCode, body } = ApiResponse.success(result);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -32,11 +31,23 @@ export class RaffleController {
     }
   }
 
-  async vote(req, res) {
+  async createPrize(req, res) {
     try {
-      const { rewardId, raffleId } = req.body;
-      const vote = await this.voteForRewardUseCase.execute(req.user, raffleId, rewardId);
-      const { statusCode, body } = ApiResponse.created(vote);
+      const user = req.user;
+      const { name, description, raffleDate } = req.body;
+      const files = req.files || [];
+
+      if (!files.length) {
+        return res.status(400).json({ success: false, message: 'Debes subir entre 1 y 3 imágenes' });
+      }
+
+      const images = files.map((file) => {
+        const base64 = file.buffer.toString('base64');
+        return `data:${file.mimetype};base64,${base64}`;
+      });
+
+      const raffle = await this.createRafflePrizeUseCase.execute(user, { name, description, images, raffleDate });
+      const { statusCode, body } = ApiResponse.created(raffle);
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
@@ -58,30 +69,6 @@ export class RaffleController {
       res.json({ success: true, data: raffle });
     } catch (error) {
       res.status(error.statusCode || 500).json({ success: false, message: error.message });
-    }
-  }
-
-  async getVotes(req, res) {
-    try {
-      const userId = req.user?.id || null;
-      const result = await this.getVotesByMonthUseCase.execute(userId);
-      const { statusCode, body } = ApiResponse.success(result);
-      res.status(statusCode).json(body);
-    } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
-      res.status(statusCode).json(body);
-    }
-  }
-
-  async createMonthly(req, res) {
-    try {
-      const { month, status, raffleDate } = req.body;
-      const raffle = await this.createMonthlyRaffleUseCase.execute({ month, status, raffleDate });
-      const { statusCode, body } = ApiResponse.created(raffle);
-      res.status(statusCode).json(body);
-    } catch (error) {
-      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
-      res.status(statusCode).json(body);
     }
   }
 
@@ -112,7 +99,7 @@ export class RaffleController {
   async getParticipants(req, res) {
     try {
       const { raffleId } = req.params;
-      const participants = await this.raffleRepository.getManualParticipants(raffleId);
+      const participants = await this.raffleRepository.getParticipantPool(raffleId);
       const { statusCode, body } = ApiResponse.success(participants);
       res.status(statusCode).json(body);
     } catch (error) {
@@ -126,10 +113,7 @@ export class RaffleController {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
 
-      const result = await getRaffleHistoryUseCase.execute({
-        page,
-        limit
-      });
+      const result = await getRaffleHistoryUseCase.execute({ page, limit });
 
       const { statusCode, body } = ApiResponse.success(result);
       res.status(statusCode).json(body);
@@ -146,6 +130,58 @@ export class RaffleController {
       const raffle = await this.updateRaffleDeadlineUseCase.execute(req.user, raffleId, durationMinutes);
       const { statusCode, body } = ApiResponse.success(raffle);
       res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async getAll(req, res) {
+    try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const result = await this.getAllRafflesUseCase.execute(req.user, { page, limit });
+      const { statusCode, body } = ApiResponse.success(result);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async updatePrize(req, res) {
+    try {
+      const { raffleId } = req.params;
+      const { name, description, raffleDate } = req.body;
+      const files = req.files || [];
+
+      let images;
+      if (files.length > 0) {
+        images = files.map((file) => {
+          const base64 = file.buffer.toString('base64');
+          return `data:${file.mimetype};base64,${base64}`;
+        });
+      }
+
+      const raffle = await this.updateRafflePrizeUseCase.execute(req.user, raffleId, {
+        name,
+        description,
+        images,
+        raffleDate
+      });
+      const { statusCode, body } = ApiResponse.success(raffle);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async delete(req, res) {
+    try {
+      const { raffleId } = req.params;
+      await this.deleteRaffleUseCase.execute(req.user, raffleId);
+      res.status(204).send();
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
       res.status(statusCode).json(body);

@@ -23,6 +23,7 @@ export class MongoLoyaltyRepository extends ILoyaltyRepository {
       rewardId: card.rewardId,
       rewardWon: card.rewardWon,
       claimedAt: card.claimedAt,
+      claimedRewards: card.claimedRewards,
       minigameCards: card.minigameCards
     });
     const saved = await doc.save();
@@ -37,7 +38,8 @@ export class MongoLoyaltyRepository extends ILoyaltyRepository {
       currentCycle: card.currentCycle,
       rewardId: card.rewardId,
       rewardWon: card.rewardWon,
-      claimedAt: card.claimedAt
+      claimedAt: card.claimedAt,
+      claimedRewards: card.claimedRewards
     };
 
     if (card.minigameCards) {
@@ -82,6 +84,12 @@ export class MongoLoyaltyRepository extends ILoyaltyRepository {
       rewardId: doc.rewardId?.toString(),
       rewardWon: doc.rewardWon,
       claimedAt: doc.claimedAt,
+      claimedRewards: (doc.claimedRewards || []).map((r) => ({
+        rewardId: r.rewardId?.toString(),
+        rewardName: r.rewardName,
+        claimedAt: r.claimedAt,
+        usedAt: r.usedAt || null
+      })),
       createdAt: doc.createdAt,
       minigameCards: doc.minigameCards
     });

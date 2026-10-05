@@ -1,12 +1,11 @@
 import { RaffleNotFound } from '../domain/RaffleErrors.js';
 
 export class GetCurrentRaffleUseCase {
-  constructor(raffleRepository, rewardRepository) {
+  constructor(raffleRepository) {
     this.raffleRepository = raffleRepository;
-    this.rewardRepository = rewardRepository;
   }
 
-  async execute(userId = null) {
+  async execute() {
     const raffle = await this.raffleRepository.findCurrent();
     if (!raffle) {
       throw new RaffleNotFound();
@@ -25,45 +24,19 @@ export class GetCurrentRaffleUseCase {
         participants: raffle.participants || [],
         manualParticipants: raffle.manualParticipants || [],
         winnerId: raffle.winnerId,
-        winnerReward: raffle.winnerReward
+        prize: raffle.prize
       },
       countdown,
       phase: raffle.status,
-      userHasVoted: false,
-      votedRewardId: null
+      prize: raffle.prize
     };
 
-    if (userId) {
-      const userVote = await this.raffleRepository.getUserVote(raffle._id, userId);
-      result.userHasVoted = !!userVote;
-      if (userVote) {
-        result.votedRewardId = userVote.rewardId?.toString() || null;
-      }
-    }
-
-    if (raffle.status === 'voting') {
-      result.votes = await this.raffleRepository.getAggregatedVotes(raffle._id);
-    }
-
     if (raffle.status === 'active' || raffle.status === 'completed') {
-      if (raffle.winnerReward) {
-        const reward = await this.rewardRepository.findById(raffle.winnerReward);
-        result.winnerReward = reward
-          ? {
-              _id: reward._id,
-              name: reward.name,
-              description: reward.description,
-              icon: reward.icon,
-              type: reward.type
-            }
-          : null;
-      }
       result.participantCount = (raffle.participants?.length || 0) + (raffle.manualParticipants?.length || 0);
       result.manualParticipants = raffle.manualParticipants || [];
     }
 
     if (raffle.status === 'completed') {
-      result.winnerName = raffle.winnerName || null;
       result.winnerId = raffle.winnerId;
     }
 

@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { RaffleNotFound } from '../domain/RaffleErrors.js';
+import { RaffleNotFound, RaffleNotYetFinished } from '../domain/RaffleErrors.js';
 import { ForbiddenError } from '../../../shared/domain/DomainError.js';
 
 export class SpinRaffleUseCase {
@@ -26,21 +26,22 @@ export class SpinRaffleUseCase {
       throw new RaffleNotFound();
     }
 
-    const manualParticipants = raffle.manualParticipants || [];
+    if (raffle.status !== 'completed' && new Date(raffle.raffleDate).getTime() > Date.now()) {
+      throw new RaffleNotYetFinished();
+    }
 
-    if (manualParticipants.length === 0) {
+    const pool = await this.raffleRepository.getParticipantPool(raffleId);
+
+    if (pool.length === 0) {
       raffle.status = 'completed';
       raffle.winnerId = null;
-      raffle.winnerName = null;
-      raffle.winnerReward = raffle.winnerReward || null;
       return await this.raffleRepository.update(raffle);
     }
 
-    const randomIndex = randomInt(manualParticipants.length);
-    const winner = manualParticipants[randomIndex];
+    const randomIndex = randomInt(pool.length);
+    const winner = pool[randomIndex];
 
     raffle.winnerId = winner.userId || null;
-    raffle.winnerName = winner.name;
     raffle.status = 'completed';
 
     return await this.raffleRepository.update(raffle);

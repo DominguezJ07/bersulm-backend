@@ -32,6 +32,7 @@ export class AppointmentController {
     this.cancelAppointmentUseCase = useCases.appointments.cancel();
     this.getUserAppointmentsUseCase = useCases.appointments.getUserAppointments();
     this.getAppointmentStatsUseCase = useCases.appointments.getStats();
+    this.updateAppointmentStatusUseCase = useCases.appointments.updateStatus();
   }
 
   async create(req, res) {
@@ -185,58 +186,36 @@ export class AppointmentController {
       const { status } = req.body;
       const adminUser = req.user;
 
-      if (!adminUser || adminUser.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          message: 'Solo administradores pueden cambiar estados'
-        });
-      }
+      const updated = await this.updateAppointmentStatusUseCase.execute({
+        appointmentId: id,
+        newStatus: status,
+        adminUser
+      });
 
-      const validTransitions = {
-        pending: ['confirmed'],
-        confirmed: ['completed'],
-        completed: [],
-        cancelled: []
-      };
-
-      const appointment = await AppointmentModel.findById(id).lean();
-      if (!appointment) {
-        return res.status(404).json({
-          success: false,
-          message: 'Cita no encontrada'
-        });
-      }
-
-      const allowed = validTransitions[appointment.status] || [];
-      if (!allowed.includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: `No se puede cambiar de '${appointment.status}' a '${status}'`
-        });
-      }
-
-      const updated = await AppointmentModel.findByIdAndUpdate(id, { status }, { new: true })
+      // Poblar userId y serviceId para las notificaciones,
+      // igual que hacía la versión anterior con Mongo directo
+      const populated = await AppointmentModel.findById(updated._id)
         .populate('userId', 'name email phone')
         .populate('serviceId', 'name price durationMin')
         .lean();
 
       if (status === 'confirmed') {
-        notifyAppointmentConfirmed(updated);
-        await sendPushToOwner(updated, {
+        notifyAppointmentConfirmed(populated);
+        await sendPushToOwner(populated, {
           title: '✅ Cita confirmada',
-          body: `Tu cita del ${updated.date} a las ${updated.time} ha sido confirmada.`,
-          data: { type: 'appointment_confirmed', appointmentId: updated._id.toString() }
+          body: `Tu cita del ${populated.date} a las ${populated.time} ha sido confirmada.`,
+          data: { type: 'appointment_confirmed', appointmentId: populated._id.toString() }
         });
       } else if (status === 'completed') {
-        notifyAppointmentCompleted(updated);
-        await sendPushToOwner(updated, {
+        notifyAppointmentCompleted(populated);
+        await sendPushToOwner(populated, {
           title: '⭐ Cita completada',
           body: `¡Gracias por visitarnos! ¿Cómo fue tu experiencia?`,
-          data: { type: 'appointment_completed', appointmentId: updated._id.toString() }
+          data: { type: 'appointment_completed', appointmentId: populated._id.toString() }
         });
       }
 
-      const { statusCode, body } = ApiResponse.success(updated);
+      const { statusCode, body } = ApiResponse.success(populated);
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);

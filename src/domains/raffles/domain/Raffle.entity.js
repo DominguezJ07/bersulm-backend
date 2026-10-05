@@ -1,48 +1,20 @@
-/**
- * @typedef {Object} ManualParticipant
- * @property {string} [_id]
- * @property {string} name
- * @property {string} [userId]
- * @property {number} [order]
- */
-
-/**
- * @typedef {Object} RaffleProps
- * @property {string} [_id]
- * @property {string} month
- * @property {'voting' | 'scheduled' | 'active' | 'completed'} [status]
- * @property {Date} raffleDate
- * @property {string} [winnerId]
- * @property {string} [winnerReward]
- * @property {string[]} [participants]
- * @property {ManualParticipant[]} [manualParticipants]
- * @property {Date} [createdAt]
- */
-
 export class Raffle {
-  /**
-   * @param {RaffleProps} props
-   */
   constructor(props) {
     this._id = props._id;
     this.month = props.month;
-    this.status = props.status || 'scheduled';
+    this.status = props.status || 'active';
     this.raffleDate = props.raffleDate;
     this.winnerId = props.winnerId;
-    this.winnerReward = props.winnerReward;
+    this.prize = props.prize || null;
     this.participants = props.participants || [];
     this.manualParticipants = props.manualParticipants || [];
     this.createdAt = props.createdAt || new Date();
   }
 
-  /**
-   * @param {Omit<RaffleProps, '_id' | 'createdAt'>} props
-   * @returns {Raffle}
-   */
   static create(props) {
     return new Raffle({
       ...props,
-      status: props.status || 'scheduled',
+      status: props.status || 'active',
       participants: props.participants || [],
       manualParticipants: props.manualParticipants || [],
       createdAt: new Date()

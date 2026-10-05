@@ -27,15 +27,16 @@ import { AddVisitUseCase } from '../../domains/loyalty/application/AddVisitUseCa
 import { SpinCardUseCase } from '../../domains/loyalty/application/SpinCardUseCase.js';
 import { InitMinigameUseCase } from '../../domains/loyalty/application/InitMinigameUseCase.js';
 import { RevealCardUseCase } from '../../domains/loyalty/application/RevealCardUseCase.js';
+import { UseRewardUseCase } from '../../domains/loyalty/application/UseRewardUseCase.js';
 
 import { GetCurrentRaffleUseCase } from '../../domains/raffles/application/GetCurrentRaffleUseCase.js';
-import { VoteForRewardUseCase } from '../../domains/raffles/application/VoteForRewardUseCase.js';
 import { SpinRaffleUseCase } from '../../domains/raffles/application/SpinRaffleUseCase.js';
-import { GetVotesUseCase } from '../../domains/raffles/application/GetVotesUseCase.js';
 import { AddManualParticipantUseCase } from '../../domains/raffles/application/AddManualParticipantUseCase.js';
 import { RemoveManualParticipantUseCase } from '../../domains/raffles/application/RemoveManualParticipantUseCase.js';
-import { CreateMonthlyRaffleUseCase } from '../../domains/raffles/application/CreateMonthlyRaffleUseCase.js';
-import { GetVotesByMonthUseCase } from '../../domains/raffles/application/GetVotesByMonthUseCase.js';
+import { CreateRafflePrizeUseCase } from '../../domains/raffles/application/CreateRafflePrizeUseCase.js';
+import { GetAllRafflesUseCase } from '../../domains/raffles/application/GetAllRafflesUseCase.js';
+import { UpdateRafflePrizeUseCase } from '../../domains/raffles/application/UpdateRafflePrizeUseCase.js';
+import { DeleteRaffleUseCase } from '../../domains/raffles/application/DeleteRaffleUseCase.js';
 import { UpdateRaffleDeadlineUseCase } from '../../domains/raffles/application/UpdateRaffleDeadlineUseCase.js';
 
 import { CreateRewardUseCase } from '../../domains/rewards/application/CreateRewardUseCase.js';
@@ -83,7 +84,11 @@ export const useCases = {
     getUserAppointments: () => singleton('getUserApptUC', () => new GetUserAppointmentsUseCase(repos.appointment())),
     getStats: () => singleton('getStatsUC', () => new GetAppointmentStatsUseCase(repos.appointment())),
     getAll: () => singleton('getAllApptUC', () => new GetAllAppointmentsUseCase(repos.appointment())),
-    updateStatus: () => singleton('updateApptStatusUC', () => new UpdateAppointmentStatusUseCase(repos.appointment()))
+    updateStatus: () =>
+      singleton(
+        'updateApptStatusUC',
+        () => new UpdateAppointmentStatusUseCase(repos.appointment(), useCases.loyalty.addVisit())
+      )
   },
   services: {
     create: () => singleton('createSvcUC', () => new CreateServiceUseCase(repos.service())),
@@ -92,21 +97,21 @@ export const useCases = {
   },
   loyalty: {
     getCard: () => singleton('getLoyaltyUC', () => new GetLoyaltyCardUseCase(repos.loyalty())),
-    addVisit: () => singleton('addVisitUC', () => new AddVisitUseCase(repos.loyalty(), repos.reward())),
+    addVisit: () => singleton('addVisitUC', () => new AddVisitUseCase(repos.loyalty())),
     spinCard: () => singleton('spinCardUC', () => new SpinCardUseCase(repos.reward())),
     initMinigame: () => singleton('initMinigameUC', () => new InitMinigameUseCase(repos.loyalty(), repos.reward())),
-    revealCard: () => singleton('revealCardUC', () => new RevealCardUseCase(repos.loyalty()))
+    revealCard: () => singleton('revealCardUC', () => new RevealCardUseCase(repos.loyalty())),
+    useReward: () => singleton('useRewardUC', () => new UseRewardUseCase(repos.loyalty()))
   },
   raffles: {
-    getCurrent: () =>
-      singleton('getCurrentRaffleUC', () => new GetCurrentRaffleUseCase(repos.raffle(), repos.reward())),
-    vote: () => singleton('voteUC', () => new VoteForRewardUseCase(repos.raffle(), repos.reward())),
+    getCurrent: () => singleton('getCurrentRaffleUC', () => new GetCurrentRaffleUseCase(repos.raffle())),
     spin: () => singleton('spinRaffleUC', () => new SpinRaffleUseCase(repos.raffle())),
-    getVotes: () => singleton('getVotesUC', () => new GetVotesUseCase(repos.raffle())),
     addParticipant: () => singleton('addParticipantUC', () => new AddManualParticipantUseCase(repos.raffle())),
     removeParticipant: () => singleton('removeParticipantUC', () => new RemoveManualParticipantUseCase(repos.raffle())),
-    createMonthly: () => singleton('createMonthlyUC', () => new CreateMonthlyRaffleUseCase(repos.raffle())),
-    getVotesByMonth: () => singleton('getVotesByMonthUC', () => new GetVotesByMonthUseCase(repos.raffle())),
+    createPrize: () => singleton('createPrizeUC', () => new CreateRafflePrizeUseCase(repos.raffle())),
+    getAll: () => singleton('getAllRafflesUC', () => new GetAllRafflesUseCase(repos.raffle())),
+    updatePrize: () => singleton('updateRafflePrizeUC', () => new UpdateRafflePrizeUseCase(repos.raffle())),
+    delete: () => singleton('deleteRaffleUC', () => new DeleteRaffleUseCase(repos.raffle())),
     updateDeadline: () => singleton('updateDeadlineUC', () => new UpdateRaffleDeadlineUseCase(repos.raffle()))
   },
   rewards: {

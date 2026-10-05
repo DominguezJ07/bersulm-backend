@@ -105,15 +105,9 @@ export const validateDeleteReward = [
   handleValidationErrors
 ];
 
-export const validateCreateRaffle = [
-  body('month').notEmpty().withMessage('Month is required'),
-  body('raffleDate').notEmpty().withMessage('Raffle date is required'),
-  handleValidationErrors
-];
-
-export const validateVote = [
-  body('rewardId').notEmpty().withMessage('Reward ID is required'),
-  body('raffleId').notEmpty().withMessage('Raffle ID is required'),
+export const validateCreateRafflePrize = [
+  body('name').trim().notEmpty().withMessage('El nombre del premio es requerido'),
+  body('raffleDate').notEmpty().withMessage('La fecha del sorteo es requerida'),
   handleValidationErrors
 ];
 
@@ -126,6 +120,11 @@ export const validateAddVisit = [body('userId').notEmpty().withMessage('User ID 
 
 export const validateRevealCard = [
   body('cardIndex').isInt({ min: 0, max: 9 }).withMessage('cardIndex must be an integer between 0 and 9'),
+  handleValidationErrors
+];
+
+export const validateUseReward = [
+  body('rewardId').trim().notEmpty().withMessage('Reward ID is required'),
   handleValidationErrors
 ];
 

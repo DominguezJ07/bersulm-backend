@@ -86,9 +86,16 @@ const options = {
           properties: {
             _id: { type: 'string' },
             month: { type: 'string' },
-            status: { type: 'string', enum: ['voting', 'active', 'completed'] },
+            status: { type: 'string', enum: ['active', 'completed'] },
             raffleDate: { type: 'string', format: 'date-time' },
-            winnerReward: { type: 'string' },
+            prize: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                images: { type: 'array', items: { type: 'string' } }
+              }
+            },
             participants: { type: 'array', items: { type: 'string' } }
           }
         },

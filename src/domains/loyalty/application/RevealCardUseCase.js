@@ -24,6 +24,12 @@ export class RevealCardUseCase {
     selectedCard.revealed = true;
 
     if (selectedCard.isWinner && selectedCard.rewardId) {
+      card.claimedRewards.push({
+        rewardId: selectedCard.rewardId,
+        rewardName: selectedCard.rewardName,
+        claimedAt: new Date(),
+        usedAt: null
+      });
       card.rewardId = selectedCard.rewardId;
       card.rewardWon = selectedCard.rewardName;
       card.status = 'reward_claimed';

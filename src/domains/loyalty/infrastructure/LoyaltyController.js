@@ -10,6 +10,7 @@ export class LoyaltyController {
     this.spinCardUseCase = useCases.loyalty.spinCard();
     this.initMinigameUseCase = useCases.loyalty.initMinigame();
     this.revealCardUseCase = useCases.loyalty.revealCard();
+    this.useRewardUseCase = useCases.loyalty.useReward();
     this.loyaltyRepository = repos.loyalty();
   }
 
@@ -78,6 +79,23 @@ export class LoyaltyController {
       const result = await this.revealCardUseCase.execute(userId, cardIndex);
       notifyLoyaltyUpdate(result);
       const { statusCode, body } = ApiResponse.success(result);
+      res.status(statusCode).json(body);
+    } catch (error) {
+      const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);
+      res.status(statusCode).json(body);
+    }
+  }
+
+  async useReward(req, res) {
+    try {
+      const userId = req.user.id;
+      const { rewardId } = req.body;
+      if (!rewardId) {
+        return res.status(400).json({ success: false, message: 'rewardId is required' });
+      }
+      const card = await this.useRewardUseCase.execute(userId, rewardId);
+      notifyLoyaltyUpdate(card);
+      const { statusCode, body } = ApiResponse.success(card);
       res.status(statusCode).json(body);
     } catch (error) {
       const { statusCode, body } = ApiResponse.error(error.message, error.statusCode || 500);

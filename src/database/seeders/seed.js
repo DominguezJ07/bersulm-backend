@@ -128,6 +128,13 @@ const loyaltyRewards = [
     icon: 'perfilado',
     type: 'perfilado',
     isLoyaltyReward: true
+  },
+  {
+    name: 'Corte Gratis Fidelidad',
+    description: 'Un corte de cabello totalmente gratis',
+    icon: 'corte',
+    type: 'corte',
+    isLoyaltyReward: true
   }
 ];
 

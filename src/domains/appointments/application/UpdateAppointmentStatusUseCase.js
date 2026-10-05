@@ -15,19 +15,13 @@ const ALLOWED_ADMIN_TRANSITIONS = {
 export class UpdateAppointmentStatusUseCase {
   /**
    * @param {import('../domain/IAppointmentRepository').IAppointmentRepository} appointmentRepository
+   * @param {import('../../loyalty/application/AddVisitUseCase').AddVisitUseCase} [addVisitUseCase]
    */
-  constructor(appointmentRepository) {
+  constructor(appointmentRepository, addVisitUseCase = null) {
     this.appointmentRepository = appointmentRepository;
+    this.addVisitUseCase = addVisitUseCase;
   }
 
-  /**
-   * @param {Object} params
-   * @param {string} params.appointmentId
-   * @param {string} params.newStatus
-   * @param {Object} params.adminUser
-   * @param {string} params.adminUser.role
-   * @returns {Promise<import('../domain/Appointment.entity').Appointment>}
-   */
   async execute({ appointmentId, newStatus, adminUser }) {
     if (!adminUser || adminUser.role !== 'admin') {
       throw new ForbiddenError('Solo los administradores pueden cambiar el estado de las citas');
@@ -53,8 +47,20 @@ export class UpdateAppointmentStatusUseCase {
     }
 
     appointment.status = newStatus;
-
     const updated = await this.appointmentRepository.update(appointment);
+
+    // Efecto secundario: sumar visita de fidelidad SOLO al cliente
+    // de esta cita puntual, solo al completarla. Un fallo aquí no
+    // debe revertir ni bloquear la cita ya completada — se registra
+    // y se puede corregir manualmente vía POST /loyalty/visit.
+    if (newStatus === 'completed' && this.addVisitUseCase) {
+      try {
+        await this.addVisitUseCase.execute(appointment.userId);
+      } catch (err) {
+        console.error('Error al sumar visita de fidelidad automática:', err);
+      }
+    }
+
     return updated;
   }
 }

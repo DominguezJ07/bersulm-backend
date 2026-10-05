@@ -1,21 +1,22 @@
-import { LoyaltyCardNotFound } from '../domain/LoyaltyErrors.js';
+import { LoyaltyCard } from '../domain/LoyaltyCard.entity.js';
 
 export class AddVisitUseCase {
-  /**
-   * @param {import('../domain/ILoyaltyRepository').ILoyaltyRepository} loyaltyRepository
-   */
   constructor(loyaltyRepository) {
     this.loyaltyRepository = loyaltyRepository;
   }
 
-  /**
-   * @param {string} userId
-   * @returns {Promise<import('../domain/LoyaltyCard.entity').LoyaltyCard>}
-   */
   async execute(userId) {
-    const card = await this.loyaltyRepository.findByUserId(userId);
+    let card = await this.loyaltyRepository.findByUserId(userId);
+
     if (!card) {
-      throw new LoyaltyCardNotFound();
+      card = LoyaltyCard.create({
+        userId,
+        visits: 0,
+        totalVisits: 0,
+        status: 'active',
+        currentCycle: 1
+      });
+      card = await this.loyaltyRepository.save(card);
     }
 
     card.visits += 1;
